@@ -15,7 +15,5 @@ async fn main() {
 
     let mut bot = bot::Bot::new(token).await;
 
-    db::prefixes::create_db().await;
-
     bot.start().await;
 }
