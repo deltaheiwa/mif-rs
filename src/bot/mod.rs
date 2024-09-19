@@ -45,6 +45,7 @@ async fn build_client(token: std::string::String) -> Result<serenity::Client, se
         .options(poise::FrameworkOptions {
             commands: vec![
                 informative::ping(),
+                administrative::prefix(),
             ],
             prefix_options: poise::PrefixFrameworkOptions {
                 prefix: Some(DEFAULT_PREFIX.to_string()),

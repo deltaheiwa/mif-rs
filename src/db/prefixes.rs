@@ -80,6 +80,8 @@ pub async fn set_prefix(guild_id: &String, prefix: &String) -> anyhow::Result<()
 
     query(q).bind(guild_id).bind(prefix).execute(&pool).await?;
 
+    info!("Set prefix for guild {}: {}", guild_id, prefix);
+
     Ok(())
 }
 
@@ -92,5 +94,7 @@ pub async fn delete_prefix(guild_id: &String) -> anyhow::Result<()> {
 
     query(q).bind(guild_id).execute(&pool).await?;
 
+    info!("Deleted prefix for guild {}", guild_id);
+    
     Ok(())
 }
