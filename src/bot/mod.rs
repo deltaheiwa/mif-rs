@@ -52,6 +52,9 @@ async fn build_client(token: std::string::String) -> Result<serenity::Client, se
                 dynamic_prefix: Some(|ctx| Box::pin(determine_prefix(ctx))),
                 ..poise::PrefixFrameworkOptions::default()
             },
+            on_error: |error| {
+                Box::pin(handlers::on_error(error))
+            },
             ..Default::default()
         })
         .setup(|ctx, _ready, framework| {

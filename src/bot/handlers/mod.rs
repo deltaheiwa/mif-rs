@@ -1,6 +1,8 @@
-use poise::serenity_prelude as serenity;
+use poise::{serenity_prelude as serenity, CreateReply};
 use ::serenity::async_trait;
+use tracing::error;
 
+use crate::bot::core::structs::{Data, Error};
 
 mod guild_events;
 mod ready;
@@ -22,5 +24,29 @@ impl serenity::EventHandler for Handler {
 
     async fn ready(&self, ctx: serenity::Context, ready: serenity::Ready) {
         ready::on_ready(ctx, ready).await;
+    }
+}
+
+
+pub async fn on_error(error: poise::FrameworkError<'_, Data, Error>) {
+    match error {
+        poise::FrameworkError::Setup { error, .. } => {
+            error!("An error occurred during setup: {:?}", error);
+        },
+        poise::FrameworkError::Command { error, ctx, .. } => {
+            error!("An error occurred while running a command: {:?}", error);
+
+            let embed = serenity::CreateEmbed::default()
+                .title("Error")
+                .description("An error occurred while running the command. It has been automatically reported to the developer.\n\nPlease try again later.")
+                .color(serenity::Colour::RED);
+
+            if let Err(err) = ctx.send(CreateReply::default().embed(embed)).await {
+                error!("Failed to respond to the command error: {:?}", err);
+            };
+        },
+        error => {
+            error!("An error occurred: {:?}", error);
+        }
     }
 }
