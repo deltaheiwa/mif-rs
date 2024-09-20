@@ -5,16 +5,18 @@ mod core;
 use poise::serenity_prelude as serenity;
 use ::serenity::all::ActivityData;
 use tracing::error;
-use crate::db::prefixes::get_prefix;
+use crate::db::prefixes::{get_pool, get_prefix};
 
 use core::structs::{Data, Error, PartialContext};
+use std::{collections::HashMap, sync::{Arc, Mutex}};
 use commands::*;
 
 
 const DEFAULT_PREFIX: &str = "m.";
 
 async fn determine_prefix(ctx: PartialContext<'_>) -> Result<Option<String>, Error> {
-    let prefix = get_prefix(&ctx.guild_id.unwrap().to_string()).await.unwrap_or(String::from("."));
+    let pool_ref = &ctx.data.prefixes_db_pool;
+    let prefix = get_prefix(pool_ref,&ctx.guild_id.unwrap().to_string()).await.unwrap_or(String::from("."));
 
     Ok(Some(prefix))
 }
@@ -60,7 +62,16 @@ async fn build_client(token: std::string::String) -> Result<serenity::Client, se
         .setup(|ctx, _ready, framework| {
             Box::pin(async move {
                 poise::builtins::register_globally(ctx, &framework.options().commands).await?;
-                Ok(Data {})
+                let data = Data {
+                    user_language_cache: Arc::new(Mutex::new(HashMap::new())),
+                    prefixes_db_pool: get_pool().await?,
+                };
+
+                // I also need to insert the data into the context of serenity
+                let mut data_lock = ctx.data.write().await;
+                data_lock.insert::<Data>(Arc::new(data.clone()));
+
+                Ok(data)
             })
         })
         .build();

@@ -2,7 +2,7 @@ use poise::{serenity_prelude as serenity, CreateReply};
 use ::serenity::async_trait;
 use tracing::error;
 
-use crate::bot::core::structs::{Data, Error};
+use crate::bot::core::structs::{Context, Data, Error};
 
 mod guild_events;
 mod ready;
@@ -46,7 +46,7 @@ pub async fn on_error(error: poise::FrameworkError<'_, Data, Error>) {
             };
         },
         error => {
-            error!("An error occurred: {:?}", error);
+            error!("An error occurred: {:?}", error.to_string());
         }
     }
 }
