@@ -6,10 +6,15 @@ use tracing::error;
 pub async fn prefix(ctx: Context<'_>, new_prefix: String) -> Result<(), Error> {
     let guild_id = ctx.guild_id().unwrap();
     let guild_id = guild_id.to_string();
+
+    let mut prefix_cache = ctx.data().prefix_cache.lock().await;
+
     let result = prefixes::set_prefix(&ctx.data().prefixes_db_pool, &guild_id, &new_prefix).await;
+
     match result {
         Ok(_) => {
             ctx.reply(format!("Prefix set to `{}`", new_prefix)).await?;
+            prefix_cache.put(guild_id, new_prefix);
         }
         Err(err) => {
             ctx.reply("Failed to set prefix. Please try again later").await?;

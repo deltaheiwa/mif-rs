@@ -2,7 +2,7 @@ use poise::{serenity_prelude as serenity, CreateReply};
 use ::serenity::async_trait;
 use tracing::error;
 
-use crate::bot::core::structs::{Context, Data, Error};
+use crate::bot::core::structs::{Data, Error};
 
 mod guild_events;
 mod ready;

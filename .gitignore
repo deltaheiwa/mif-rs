@@ -2,4 +2,5 @@
 .shuttle-storage
 Secrets*.toml
 .env
-*.db
+*.db*
+/.vscode

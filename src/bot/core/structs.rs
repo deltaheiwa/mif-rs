@@ -1,11 +1,14 @@
-use std::{collections::HashMap, sync::{Arc, Mutex}};
+extern crate lru;
 
+use std::sync::Arc;
+use tokio::sync::Mutex;
+use lru::LruCache;
 use serenity::prelude::TypeMapKey;
 
 #[derive(Clone)]
 pub struct Data {
     pub prefixes_db_pool: sqlx::SqlitePool,
-    pub user_language_cache: Arc<Mutex<HashMap<String, String>>>,
+    pub prefix_cache: Arc<Mutex<LruCache::<String, String>>>,
 } 
 
 impl TypeMapKey for Data {
