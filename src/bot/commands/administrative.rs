@@ -2,7 +2,11 @@ use crate::bot::core::structs::{Context, Error};
 use crate::db::prefixes;
 use logfather::error;
 
-#[poise::command(slash_command, prefix_command)]
+#[poise::command(
+    slash_command, prefix_command,
+    guild_only,
+    required_permissions = "MANAGE_GUILD"
+)]
 pub async fn prefix(ctx: Context<'_>, new_prefix: String) -> Result<(), Error> {
     let lang = "en";
     let guild_id = ctx.guild_id().unwrap();

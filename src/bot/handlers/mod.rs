@@ -1,6 +1,6 @@
 use poise::{serenity_prelude as serenity, CreateReply};
 use ::serenity::async_trait;
-use logfather::error;
+use logfather::{warn, error};
 
 use crate::bot::core::structs::{Data, Error};
 
@@ -43,6 +43,42 @@ pub async fn on_error(error: poise::FrameworkError<'_, Data, Error>) {
 
             if let Err(err) = ctx.send(CreateReply::default().embed(embed)).await {
                 error!("Failed to respond to the command error: {:?}", err);
+            };
+        },
+        poise::FrameworkError::MissingUserPermissions { missing_permissions, ctx, .. } => {
+            let missing_permissions = missing_permissions
+                .unwrap_or(serenity::Permissions::empty())
+                .iter_names()
+                .map(|(name, _)| name)
+                .collect::<Vec<_>>();
+
+
+            warn!("{} is missing permissions: {:?}", ctx.author().name, missing_permissions.join(", "));
+
+            let embed = serenity::CreateEmbed::default()
+                .title("Error")
+                .description(format!("You are missing `{:?}` permissions to run this command.", missing_permissions.join(", ")))
+                .color(serenity::Colour::RED);
+
+            if let Err(err) = ctx.send(CreateReply::default().embed(embed)).await {
+                error!("Failed to respond to the missing permissions error: {:?}", err);
+            };
+        },
+        poise::FrameworkError::MissingBotPermissions { missing_permissions, ctx, .. } => {
+            let missing_permissions = missing_permissions
+                .iter_names()
+                .map(|(name, _)| name)
+                .collect::<Vec<_>>();
+
+            warn!("Bot is missing permissions in guild {}: {:?}", ctx.guild().unwrap().name, missing_permissions.join(", "));
+
+            let embed = serenity::CreateEmbed::default()
+                .title("Error")
+                .description(format!("I am missing `{:?}` permissions to execute this command.", missing_permissions.join(", ")))
+                .color(serenity::Colour::RED);
+
+            if let Err(err) = ctx.send(CreateReply::default().embed(embed)).await {
+                error!("Failed to respond to the missing permissions error: {:?}", err);
             };
         },
         error => {
