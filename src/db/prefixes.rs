@@ -1,5 +1,5 @@
 use sqlx::{query, Row, SqlitePool};
-use tracing::info;
+use logfather::info;
 
 
 pub async fn get_prefix(pool: &SqlitePool, guild_id: &String) -> anyhow::Result<String> {

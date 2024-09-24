@@ -7,7 +7,7 @@ use std::{num::NonZeroUsize, sync::Arc};
 use tokio::sync::Mutex;
 use ::serenity::all::ActivityData;
 use lru::LruCache;
-use tracing::error;
+use logfather::error;
 
 use crate::db::{prefixes::get_prefix, get_pool};
 use core::structs::{Data, Error, PartialContext};
@@ -21,7 +21,13 @@ const DEFAULT_PREFIX: &str = "m.";
 async fn determine_prefix(ctx: PartialContext<'_>) -> Result<Option<String>, Error> {
     let guild_id = &ctx.guild_id.unwrap().to_string();
     let mut prefix_cache = ctx.data.prefix_cache.lock().await;
-    let prefix = prefix_cache.get(guild_id).unwrap_or(&get_prefix(&ctx.data.prefixes_db_pool, guild_id).await.unwrap_or(String::from("."))).clone();
+    let prefix = prefix_cache
+        .get(guild_id)
+        .unwrap_or(
+            &get_prefix(&ctx.data.db_pool, guild_id)
+            .await
+            .unwrap_or(String::from(".")))
+        .clone();
 
     Ok(Some(prefix))
 }
@@ -68,7 +74,7 @@ async fn build_client(token: std::string::String) -> Result<serenity::Client, se
             Box::pin(async move {
                 poise::builtins::register_globally(ctx, &framework.options().commands).await?;
                 let data = Data {
-                    prefixes_db_pool: get_pool().await?,
+                    db_pool: get_pool().await?,
                     prefix_cache: Arc::new(Mutex::new(LruCache::new(NonZeroUsize::new(100).unwrap()))),
                 };
 

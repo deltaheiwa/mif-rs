@@ -7,7 +7,7 @@ use serenity::prelude::TypeMapKey;
 
 #[derive(Clone)]
 pub struct Data {
-    pub prefixes_db_pool: sqlx::SqlitePool,
+    pub db_pool: sqlx::SqlitePool,
     pub prefix_cache: Arc<Mutex<LruCache::<String, String>>>,
 } 
 

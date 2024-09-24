@@ -1,6 +1,6 @@
 use std::{env, path::PathBuf};
 use sqlx::{migrate::MigrateDatabase, query, sqlite::SqlitePoolOptions, Sqlite, SqlitePool};
-use tracing::{info, error};
+use logfather::{info, error};
 
 pub mod prefixes;
 

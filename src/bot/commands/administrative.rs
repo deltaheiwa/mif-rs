@@ -1,6 +1,6 @@
 use crate::bot::core::structs::{Context, Error};
 use crate::db::prefixes;
-use tracing::error;
+use logfather::error;
 
 #[poise::command(slash_command, prefix_command)]
 pub async fn prefix(ctx: Context<'_>, new_prefix: String) -> Result<(), Error> {
@@ -9,7 +9,7 @@ pub async fn prefix(ctx: Context<'_>, new_prefix: String) -> Result<(), Error> {
 
     let mut prefix_cache = ctx.data().prefix_cache.lock().await;
 
-    let result = prefixes::set_prefix(&ctx.data().prefixes_db_pool, &guild_id, &new_prefix).await;
+    let result = prefixes::set_prefix(&ctx.data().db_pool, &guild_id, &new_prefix).await;
 
     match result {
         Ok(_) => {
