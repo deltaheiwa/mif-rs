@@ -6,6 +6,6 @@ pub fn install_subscriber() {
         .file(true)
         .path("logs/main.log")
         .timestamp_format("%Y-%m-%d %H:%M:%S")
-        .log_format("{timestamp} [{level}]: {message}")
+        .log_format("{timestamp} [{level}] {module_path} | {message}")
         .file_ignore(Level::Debug);
 }

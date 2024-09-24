@@ -20,7 +20,7 @@ pub async fn set_prefix(pool: &SqlitePool, guild_id: &String, prefix: &String) -
 
     query(q).bind(guild_id).bind(prefix).execute(pool).await?;
 
-    info!("Set prefix for guild {}: {}", guild_id, prefix);
+    info!("Set prefix for guild {}: `{}`", guild_id, prefix);
 
     Ok(())
 }
