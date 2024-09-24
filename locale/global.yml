@@ -1,0 +1,19 @@
+_version: 2
+
+commands:
+  info:
+    ping:
+      latency:
+        en: Pong! `%{latency}ms`
+        uk: Понг! `%{latency}мс`
+      no_latency:
+        en: Pong!
+        uk: Понг!
+  admin:
+    prefix:
+      success:
+        en: Prefix set to `%{prefix}`
+        uk: Префікс встановлено як `%{prefix}`
+      fail:
+        en: Failed to set prefix. Please try again later
+        uk: Не вдалося встановити префікс. Будь ласка, спробуйте пізніше
