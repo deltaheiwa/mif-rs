@@ -19,7 +19,12 @@ const DEFAULT_PREFIX: &str = "m.";
 /// This function is used to determine the prefix on a command call for each separate server.
 /// It first checks the cache, if the prefix is not found in the cache, it queries the database, or the default '.' prefix if it's not foud in the database either.
 async fn determine_prefix(ctx: PartialContext<'_>) -> Result<Option<String>, Error> {
-    let guild_id = &ctx.guild_id.unwrap().to_string();
+    let guild_id = match ctx.guild_id {
+        Some(guild_id) => &guild_id.to_string(),
+        None => {
+            return Ok(Some(String::from(".")));
+        },
+    };
     let mut prefix_cache = ctx.data.prefix_cache.lock().await;
     let prefix = prefix_cache
         .get(guild_id)
@@ -52,12 +57,15 @@ impl Bot {
 async fn build_client(token: std::string::String) -> Result<serenity::Client, serenity::Error> {
     let intents = serenity::GatewayIntents::non_privileged()
         | serenity::GatewayIntents::MESSAGE_CONTENT 
-        | serenity::GatewayIntents::GUILD_MESSAGES;
+        | serenity::GatewayIntents::GUILD_MESSAGES
+        | serenity::GatewayIntents::GUILD_MEMBERS
+        | serenity::GatewayIntents::GUILD_PRESENCES;
 
     let framework = poise::Framework::builder()
         .options(poise::FrameworkOptions {
             commands: vec![
                 informative::ping(),
+                informative::user_info(),
                 administrative::prefix(),
             ],
             prefix_options: poise::PrefixFrameworkOptions {

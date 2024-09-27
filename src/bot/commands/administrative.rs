@@ -8,7 +8,7 @@ use logfather::error;
     required_permissions = "MANAGE_GUILD"
 )]
 pub async fn prefix(ctx: Context<'_>, new_prefix: String) -> Result<(), Error> {
-    let lang = "en";
+    let language = "en";
     let guild_id = ctx.guild_id().unwrap();
     let guild_id = guild_id.to_string();
 
@@ -18,11 +18,11 @@ pub async fn prefix(ctx: Context<'_>, new_prefix: String) -> Result<(), Error> {
 
     match result {
         Ok(_) => {
-            ctx.reply(format!("{}", t!("commands.admin.prefix.success", prefix = new_prefix, locale = lang))).await?;
+            ctx.reply(format!("{}", t!("commands.admin.prefix.success", prefix = new_prefix, locale = language))).await?;
             prefix_cache.put(guild_id, new_prefix);
         }
         Err(err) => {
-            ctx.reply(format!("{}", t!("commands.admin.prefix.fail", locale = lang))).await?;
+            ctx.reply(format!("{}", t!("commands.admin.prefix.fail", locale = language))).await?;
             error!("Failed to set prefix `{}` for guild {}: {}", new_prefix, guild_id, err);
         }
     }

@@ -1,5 +1,7 @@
 use poise::serenity_prelude as serenity;
-use crate::bot::core::structs::{Context, Error};
+use ::serenity::all::Presence;
+use crate::bot::core::structs::{Context, CustomColor, Error};
+use crate::utils::time;
 
 
 #[poise::command(slash_command, prefix_command)]
@@ -16,4 +18,105 @@ pub async fn ping(ctx: Context<'_>) -> Result<(), Error> {
         ctx.reply(format!("{}", t!("commands.info.ping.no_latency", locale = language))).await?;
     }
     Ok(())
+}
+
+
+#[poise::command(
+    slash_command, prefix_command,
+    rename = "user-info",
+    name_localized("uk", "інфо-користувача"),
+    description_localized("en", "Get information about a user"),
+    description_localized("uk", "Отримай інформацію про користувача")
+)]
+pub async fn user_info(
+    ctx: Context<'_>, 
+    #[name_localized("uk", "користувач")] user: Option<serenity::User>
+) -> Result<(), Error> {
+    let language = "en";
+    let user_info = user.unwrap_or(ctx.author().clone());
+
+    let embed = match ctx.guild() {
+        Some(guild) =>  {
+            match guild.members.get(&user_info.id) {
+                Some(member) => {
+                    let color = match guild.member_highest_role(member) {
+                        Some(role) => role.colour,
+                        None => CustomColor::CYAN
+                    };
+                    let presence = guild.presences.get(&user_info.id);
+                    build_member_embed(member, language, color, presence)
+                },
+                None => build_user_embed(&user_info, language, None, &user_info.global_name)
+            }
+        },
+        None => build_user_embed(&user_info, language, None, &user_info.global_name)
+    };
+    
+    ctx.send(poise::CreateReply::default().embed(embed)).await?;
+
+
+    Ok(())
+}
+
+fn build_user_embed(user: &serenity::User, language: &str, embed_color: Option<serenity::Color>, nickname: &Option<String>) -> serenity::CreateEmbed {
+    let color = embed_color.unwrap_or(CustomColor::CYAN);
+
+    let mut embed = serenity::CreateEmbed::default()
+        .title(format!("{}", t!("commands.info.user_info.title", locale = language)))
+        .description(format!("{}", t!("commands.info.user_info.description", user = user.tag(), locale = language)))
+        .color(color)
+        .thumbnail(user.face());
+
+    embed = embed.field(
+        format!("{}", t!("commands.info.user_info.fields.username", locale = language)),
+        format!("{}", user.name),
+        true
+    );
+    
+    if let Some(nickname) = nickname {
+        embed = embed.field(
+            format!("{}", t!("commands.info.user_info.fields.nickname", locale = language)),
+            format!("{}", nickname),
+            true
+        );
+    }
+
+    embed = embed.field(
+        "ID",
+        format!("{}", user.id),
+        true
+    );
+
+    embed = embed.field(
+        format!("{}", t!("commands.info.user_info.fields.created_at", locale = language)),
+        format!("{}", time::get_relative_timestamp(user.created_at())),
+        true
+    );
+
+    
+
+    embed
+}
+
+fn build_member_embed(member: &serenity::Member, language: &str, embed_color: serenity::Color, presence: Option<&Presence>) -> serenity::CreateEmbed {
+    let user = &member.user;
+    let mut embed = build_user_embed(user, language, Some(embed_color), &Some(String::from(member.display_name())));
+
+    if let Some(joined_at) = member.joined_at {
+        embed = embed.field(
+            format!("{}", t!("commands.info.user_info.fields.joined_at", locale = language)),
+            format!("{}", time::get_relative_timestamp(joined_at)),
+            true
+        );
+    }
+
+    if let Some(presence) = presence {
+        embed = embed.field(
+            format!("{}", t!("commands.info.user_info.fields.status", locale = language)),
+            format!("{}", presence.status.name()),
+            true
+        );
+    }
+
+    embed
 }

@@ -9,6 +9,29 @@ commands:
       no_latency:
         en: Pong!
         uk: Понг!
+    user_info:
+      title:
+        en: Info about user
+        uk: Інформація про користувача
+      description:
+        en: Here is information I could gather about %{user}
+        uk: Ось інформація, яку я зміг зібрати про %{user}
+      fields:
+        username:
+          en: Username
+          uk: Ім'я користувача
+        nickname:
+          en: Nickname
+          uk: Нікнейм
+        created_at:
+          en: Created
+          uk: Створено
+        joined_at:
+          en: Joined
+          uk: Приєднався
+        status:
+          en: Online status
+          uk: Статус онлайну
   admin:
     prefix:
       success:
