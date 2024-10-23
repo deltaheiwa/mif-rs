@@ -1,6 +1,30 @@
 _version: 2
 
 commands:
+  admin:
+    prefix:
+      success:
+        en: Prefix set to `%{prefix}`
+        uk: Префікс встановлено як `%{prefix}`
+      fail:
+        en: Failed to set prefix. Please try again later
+        uk: Не вдалося встановити префікс. Будь ласка, спробуйте пізніше
+  directive:
+    preferences:
+      title:
+        en: Preferences
+        uk: Налаштування
+      description:
+        en: p%{username}' preferences
+        uk: Налаштування %{username}'
+      fields:
+        language:
+          en: Language
+          uk: Мова
+      select_menu:
+        selection_description:
+          en: English
+          uk: Українська
   info:
     ping:
       latency:
@@ -14,7 +38,7 @@ commands:
         en: Info about user
         uk: Інформація про користувача
       description:
-        en: Here is information I could gather about %{user}
+        en: Here is the information I could gather about %{user}
         uk: Ось інформація, яку я зміг зібрати про %{user}
       fields:
         username:
@@ -32,11 +56,5 @@ commands:
         status:
           en: Online status
           uk: Статус онлайну
-  admin:
-    prefix:
-      success:
-        en: Prefix set to `%{prefix}`
-        uk: Префікс встановлено як `%{prefix}`
-      fail:
-        en: Failed to set prefix. Please try again later
-        uk: Не вдалося встановити префікс. Будь ласка, спробуйте пізніше
+
+  

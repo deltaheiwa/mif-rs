@@ -2,6 +2,7 @@ use std::{env, path::PathBuf};
 use sqlx::{migrate::MigrateDatabase, query, sqlite::SqlitePoolOptions, Sqlite, SqlitePool};
 use logfather::{info, error};
 
+pub mod users;
 pub mod prefixes;
 
 pub async fn get_pool() -> anyhow::Result<SqlitePool> {
@@ -60,14 +61,8 @@ async fn initialize_schema(pool: &SqlitePool) -> anyhow::Result<()> {
         );
 
         CREATE TABLE IF NOT EXISTS users (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            discord_id TEXT NOT NULL
-        );
-
-        CREATE TABLE IF NOT EXISTS user_data (
-            user_id INTEGER PRIMARY KEY,
-            language TEXT NOT NULL,
-            FOREIGN KEY(user_id) REFERENCES users(id)
+            discord_id TEXT PRIMARY KEY,
+            language_code TEXT NOT NULL
         );
     "#;
 

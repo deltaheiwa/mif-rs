@@ -1,12 +1,12 @@
 use poise::serenity_prelude as serenity;
 use ::serenity::all::Presence;
 use crate::bot::core::structs::{Context, CustomColor, Error};
-use crate::utils::time;
+use crate::utils::{time, language::get_language};
 
 
 #[poise::command(slash_command, prefix_command)]
 pub async fn ping(ctx: Context<'_>) -> Result<(), Error> {
-    let language = "en";
+    let language = get_language(ctx.data(), &ctx.author().id.to_string()).await;
     let runners = &ctx.framework().shard_manager.runners.lock().await;
     let runner_info = runners.get(&serenity::ShardId(0)).unwrap();
 
@@ -21,19 +21,19 @@ pub async fn ping(ctx: Context<'_>) -> Result<(), Error> {
 }
 
 
+/// Get information about a user
 #[poise::command(
     slash_command, prefix_command,
     rename = "user-info",
     name_localized("uk", "інфо-користувача"),
-    description_localized("en", "Get information about a user"),
     description_localized("uk", "Отримай інформацію про користувача")
 )]
 pub async fn user_info(
     ctx: Context<'_>, 
     #[name_localized("uk", "користувач")] user: Option<serenity::User>
 ) -> Result<(), Error> {
-    let language = "en";
     let user_info = user.unwrap_or(ctx.author().clone());
+    let language = get_language(ctx.data(), &ctx.author().id.to_string()).await;
 
     let embed = match ctx.guild() {
         Some(guild) =>  {
@@ -44,12 +44,12 @@ pub async fn user_info(
                         None => CustomColor::CYAN
                     };
                     let presence = guild.presences.get(&user_info.id);
-                    build_member_embed(member, language, color, presence)
+                    build_member_embed(member, &language, color, presence)
                 },
-                None => build_user_embed(&user_info, language, None, &user_info.global_name)
+                None => build_user_embed(&user_info, &language, None, &user_info.global_name)
             }
         },
-        None => build_user_embed(&user_info, language, None, &user_info.global_name)
+        None => build_user_embed(&user_info, &language, None, &user_info.global_name)
     };
     
     ctx.send(poise::CreateReply::default().embed(embed)).await?;
@@ -58,7 +58,7 @@ pub async fn user_info(
     Ok(())
 }
 
-fn build_user_embed(user: &serenity::User, language: &str, embed_color: Option<serenity::Color>, nickname: &Option<String>) -> serenity::CreateEmbed {
+fn build_user_embed(user: &serenity::User, language: &String, embed_color: Option<serenity::Color>, nickname: &Option<String>) -> serenity::CreateEmbed {
     let color = embed_color.unwrap_or(CustomColor::CYAN);
 
     let mut embed = serenity::CreateEmbed::default()
@@ -98,7 +98,7 @@ fn build_user_embed(user: &serenity::User, language: &str, embed_color: Option<s
     embed
 }
 
-fn build_member_embed(member: &serenity::Member, language: &str, embed_color: serenity::Color, presence: Option<&Presence>) -> serenity::CreateEmbed {
+fn build_member_embed(member: &serenity::Member, language: &String, embed_color: serenity::Color, presence: Option<&Presence>) -> serenity::CreateEmbed {
     let user = &member.user;
     let mut embed = build_user_embed(user, language, Some(embed_color), &Some(String::from(member.display_name())));
 

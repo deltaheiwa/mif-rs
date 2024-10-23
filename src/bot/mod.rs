@@ -1,6 +1,6 @@
 mod handlers;
 mod commands;
-mod core;
+pub mod core;
 
 use poise::serenity_prelude as serenity;
 use std::{num::NonZeroUsize, sync::Arc};
@@ -67,6 +67,7 @@ async fn build_client(token: std::string::String) -> Result<serenity::Client, se
                 informative::ping(),
                 informative::user_info(),
                 administrative::prefix(),
+                directive::preferences(),
             ],
             prefix_options: poise::PrefixFrameworkOptions {
                 prefix: Some(DEFAULT_PREFIX.to_string()),
@@ -84,6 +85,7 @@ async fn build_client(token: std::string::String) -> Result<serenity::Client, se
                 let data = Data {
                     db_pool: get_pool().await?,
                     prefix_cache: Arc::new(Mutex::new(LruCache::new(NonZeroUsize::new(100).unwrap()))),
+                    language_cache: Arc::new(Mutex::new(LruCache::new(NonZeroUsize::new(100).unwrap())))
                 };
 
                 // I also need to insert the data into the context of serenity
