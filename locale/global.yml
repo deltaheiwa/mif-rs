@@ -23,16 +23,12 @@ commands:
             en: Language
             uk: Мова
           value:
-            en: "English\n\n*To change language, send* `preferences language <language>` *command*"
-            uk: "Українська\n\n*Щоб змінити мову, надішліть команду* `preferences language <language>`"
-      select_menu:
-        description:
-          en: English
-          uk: Українська
+            en: "**English** 🇺🇸\n\n*To change language, send* `preferences language <language>` *command*"
+            uk: "**Українська** 🇺🇦\n\n*Щоб змінити мову, надішліть команду* `preferences language <language>`"
       change_language:
         success:
           en: Language changed to `%{language_success}`
-          uk: Мова змінена на `%{language_success}`
+          uk: Мову змінено на `%{language_success}`
         fail:
           en: "Could not recognize the language `%{language_fail}`\n\nIt is possible to select only one of the following languages: `english`, `ukrainian`"
           uk: "Не вдалося визначити мову `%{language_fail}`.\n\nМожна обрати лише одну з наступних мов: `english`, `ukrainian`"
