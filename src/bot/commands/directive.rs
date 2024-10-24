@@ -1,23 +1,19 @@
 use std::collections::HashMap;
 
 use poise::serenity_prelude as serenity;
-use ::serenity::all::CreateSelectMenuOption;
 use crate::bot::core::structs::{Context, Error, CustomColor};
 use crate::utils::language::get_language;
-use crate::db::users::{add_user, hit_user};
+use crate::db::users::{add_user, hit_user, set_language_code};
 use logfather::error;
 
 
-#[poise::command(
-    slash_command, prefix_command
-)]
-pub async fn preferences(ctx: Context<'_>) -> Result<(), Error> {
+async fn show_common(ctx: Context<'_>) -> Result<(), Error> {
     if !(hit_user(&ctx.data().db_pool, &ctx.author().id.to_string()).await?) { 
         match add_user(&ctx.data().db_pool, &ctx.author().id.to_string()).await {
             Ok(_) => {},
             Err(e) => {
                 error!("Failed to add user in preferences with ID {}: {:?}", &ctx.author().id, e);
-                ctx.reply("Database error. Please try again error").await?;
+                ctx.reply("Database error. Please try again later").await?;
                 return Ok(());
             }
         }
@@ -27,17 +23,14 @@ pub async fn preferences(ctx: Context<'_>) -> Result<(), Error> {
 
     let mut embed = serenity::CreateEmbed::default()
         .title(t!("commands.directive.preferences.title", locale = language))
-        .description(t!("commands.directive.preferences.description", locale = language))
+        .description(t!("commands.directive.preferences.description", locale = language, username = ctx.author().name))
         .color(CustomColor::CYAN);
 
-    let language_code_map: HashMap<&str, &str> = vec![
-        ("en", "English"),
-        ("uk", "Ukrainian"),
-    ].into_iter().collect();
-
-    let language_name = *language_code_map.get(language.as_str()).unwrap_or(&"Unknown");
-
-    embed = embed.field(t!("commands.directive.preferences.language", locale = language), language_name, false);
+    embed = embed.field(
+        t!("commands.directive.preferences.fields.language.name", locale = language), 
+        t!("commands.directive.preferences.fields.language.value", locale = language), 
+        false
+    );
     
     let ctx_id: u64 = ctx.id();
     let preferences_button_id: String = format!("{}pref", ctx_id);
@@ -56,19 +49,9 @@ pub async fn preferences(ctx: Context<'_>) -> Result<(), Error> {
         .await
     {
         let modal_id: String = format!("{}modal", ctx_id);
-        let language_options = Vec::from_iter(language_code_map.iter().map(|(k, v)| {
-            CreateSelectMenuOption::new(v as &str, k as &str).description(t!("commands.directive.preferences.select_menu.description", locale = k))
-        }));
-        let select_menu = serenity::CreateSelectMenu::new(
-                format!("{}language", modal_id), 
-                serenity::CreateSelectMenuKind::String {
-                    options: language_options
-        });
 
         let modal = serenity::CreateModal::new(&modal_id, "Preferences")
-            .components(vec![
-                serenity::CreateActionRow::SelectMenu(select_menu)
-            ]);
+            .components(vec![]);
 
         press.create_response(
             &ctx.serenity_context(), 
@@ -82,3 +65,56 @@ pub async fn preferences(ctx: Context<'_>) -> Result<(), Error> {
 }
 
 
+#[poise::command(
+    prefix_command, slash_command
+)]
+pub async fn preferences(_ctx: Context<'_>) -> Result<(), Error> {
+    show_common(_ctx).await
+}
+
+#[poise::command(
+    slash_command, prefix_command
+)]
+pub async fn show(ctx: Context<'_>) -> Result<(), Error> {
+    show_common(ctx).await
+}
+
+#[poise::command(
+    slash_command, prefix_command,
+    )]
+pub async fn language(ctx: Context<'_>, new_language: String) -> Result<(), Error> {
+    let new_language = new_language.to_lowercase();
+    let language = get_language(ctx.data(), &ctx.author().id.to_string()).await;
+
+    let languages = vec!["en", "uk", "ua", "ukrainian", "english"];
+
+    let language_code_map: HashMap<&str, &str> = vec![
+        ("en", "English"),
+        ("uk", "Ukrainian"),
+    ].into_iter().collect();
+
+    if languages.contains(&new_language.as_str()) {
+        let new_language = match new_language.as_str() {
+            "ua" => "uk",
+            "ukrainian" => "uk",
+            "english" => "en",
+            _ => new_language.as_str()
+        };
+        let language_name = *language_code_map.get(new_language).unwrap_or(&"Unknown");
+
+        match set_language_code(&ctx.data().db_pool, &ctx.author().id.to_string(), new_language).await {
+            Ok(_) => {},
+            Err(e) => {
+                error!("Failed to set language for user with ID {}: {:?}", &ctx.author().id, e);
+                ctx.reply("Database error. Please try again later").await?;
+                return Ok(());
+            }
+        }
+
+        ctx.reply(format!("{}", t!("commands.directive.preferences.change_language.success", locale = language, language_success = language_name))).await?;
+    } else {
+        ctx.reply(format!("{}", t!("commands.directive.preferences.change_language.fail", locale = language, language_fail = new_language))).await?;
+    }
+
+    Ok(())
+}

@@ -67,7 +67,13 @@ async fn build_client(token: std::string::String) -> Result<serenity::Client, se
                 informative::ping(),
                 informative::user_info(),
                 administrative::prefix(),
-                directive::preferences(),
+                poise::Command {
+                    subcommands: vec![
+                        directive::show(),
+                        directive::language(),
+                    ],
+                    ..directive::preferences()
+                }
             ],
             prefix_options: poise::PrefixFrameworkOptions {
                 prefix: Some(DEFAULT_PREFIX.to_string()),

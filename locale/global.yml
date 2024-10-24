@@ -15,16 +15,27 @@ commands:
         en: Preferences
         uk: Налаштування
       description:
-        en: p%{username}' preferences
+        en: "%{username}' preferences"
         uk: Налаштування %{username}'
       fields:
         language:
-          en: Language
-          uk: Мова
+          name:
+            en: Language
+            uk: Мова
+          value:
+            en: "English\n\n*To change language, send* `preferences language <language>` *command*"
+            uk: "Українська\n\n*Щоб змінити мову, надішліть команду* `preferences language <language>`"
       select_menu:
-        selection_description:
+        description:
           en: English
           uk: Українська
+      change_language:
+        success:
+          en: Language changed to `%{language_success}`
+          uk: Мова змінена на `%{language_success}`
+        fail:
+          en: "Could not recognize the language `%{language_fail}`\n\nIt is possible to select only one of the following languages: `english`, `ukrainian`"
+          uk: "Не вдалося визначити мову `%{language_fail}`.\n\nМожна обрати лише одну з наступних мов: `english`, `ukrainian`"
   info:
     ping:
       latency:
