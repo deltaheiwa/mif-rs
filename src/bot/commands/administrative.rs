@@ -1,12 +1,24 @@
-use crate::bot::core::structs::{Context, Error};
+use crate::bot::core::structs::{Context, Error, Data};
 use crate::db::prefixes;
 use crate::utils::language::get_language;
 use logfather::error;
 
+async fn on_missing_prefix_error(error: poise::FrameworkError<'_, Data, Error>) {
+    match error {
+        poise::FrameworkError::ArgumentParse { input, ctx, .. } => {
+            let language = get_language(ctx.data(), &ctx.author().id.to_string()).await;
+            if input == None { ctx.reply(format!("{}", t!("commands.admin.prefix.no_input", locale = language))).await.unwrap(); }
+        }
+        _ => {
+            error!("An error occurred while running the prefix command: {}", error);
+        }
+}}
+
 #[poise::command(
     slash_command, prefix_command,
     guild_only,
-    required_permissions = "MANAGE_GUILD"
+    required_permissions = "MANAGE_GUILD",
+    on_error = on_missing_prefix_error
 )]
 pub async fn prefix(ctx: Context<'_>, new_prefix: String) -> Result<(), Error> {
     let language = get_language(ctx.data(), &ctx.author().id.to_string()).await;

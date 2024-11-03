@@ -9,6 +9,9 @@ commands:
       fail:
         en: Failed to set prefix. Please try again later
         uk: Не вдалося встановити префікс. Будь ласка, спробуйте пізніше
+      no_input:
+        en: "To set a new prefix, please provide it as an argument: `prefix <new_prefix>`"
+        uk: "Щоб встановити новий префікс, будь ласка, вкажіть його як аргумент: `prefix <новий_префікс>`"
   directive:
     preferences:
       title:

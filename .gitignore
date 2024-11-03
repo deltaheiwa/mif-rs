@@ -4,4 +4,5 @@ Secrets*.toml
 .env
 *.db*
 /.vscode
+/.idea
 /logs

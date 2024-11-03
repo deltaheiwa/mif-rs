@@ -9,7 +9,7 @@ use ::serenity::all::ActivityData;
 use lru::LruCache;
 use logfather::error;
 
-use crate::db::{prefixes::get_prefix, get_pool};
+use crate::{db::{get_pool, prefixes::get_prefix}, utils::apicallers::wolvesville};
 use core::structs::{Data, Error, PartialContext};
 use commands::*;
 
@@ -17,7 +17,7 @@ use commands::*;
 const DEFAULT_PREFIX: &str = "m.";
 
 /// This function is used to determine the prefix on a command call for each separate server.
-/// It first checks the cache, if the prefix is not found in the cache, it queries the database, or the default '.' prefix if it's not foud in the database either.
+/// It first checks the cache, if the prefix is not found in the cache, it queries the database, or the default '.' prefix if it's not found in the database either.
 async fn determine_prefix(ctx: PartialContext<'_>) -> Result<Option<String>, Error> {
     let guild_id = match ctx.guild_id {
         Some(guild_id) => &guild_id.to_string(),
@@ -91,7 +91,8 @@ async fn build_client(token: std::string::String) -> Result<serenity::Client, se
                 let data = Data {
                     db_pool: get_pool().await?,
                     prefix_cache: Arc::new(Mutex::new(LruCache::new(NonZeroUsize::new(100).unwrap()))),
-                    language_cache: Arc::new(Mutex::new(LruCache::new(NonZeroUsize::new(100).unwrap())))
+                    language_cache: Arc::new(Mutex::new(LruCache::new(NonZeroUsize::new(100).unwrap()))),
+                    wolvesville_client: wolvesville::initialize_client(),
                 };
 
                 // I also need to insert the data into the context of serenity

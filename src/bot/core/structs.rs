@@ -10,8 +10,9 @@ use serenity::prelude::TypeMapKey;
 pub struct Data {
     pub db_pool: sqlx::SqlitePool,
     pub prefix_cache: Arc<Mutex<LruCache::<String, String>>>,
-    pub language_cache: Arc<Mutex<LruCache::<String, String>>>
-} 
+    pub language_cache: Arc<Mutex<LruCache::<String, String>>>,
+    pub wolvesville_client: Arc<reqwest::Client>
+}
 
 impl TypeMapKey for Data {
     type Value = Arc<Self>;
