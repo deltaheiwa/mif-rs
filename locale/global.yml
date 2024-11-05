@@ -66,5 +66,16 @@ commands:
         status:
           en: Online status
           uk: Статус онлайну
+  wov:
+    player:
+      no_input:
+        en: "No username provided.\n\nCorrect syntax: `wolvesville player search <username>`"
+        uk: "Не вказано ім'я користувача.\n\nПравильний синтаксис: `wolvesville player search <ім'я_користувача>`"
+      too_short:
+        en: "Username `%{username}` is too short.\n\nPlease provide a username with at least 3 characters"
+        uk: "Ім'я користувача `%{username}` занадто коротке.\n\nБудь ласка, вкажіть ім'я користувача, яке містить принаймні 3 символи"
 
-  
+common:
+  error:
+    en: Error
+    uk: Помилка

@@ -26,7 +26,7 @@ pub async fn get_wolvesville_player_by_id(client: &Arc<Client>, player_id: &str)
 }
 
 pub async fn get_wolvesville_player_by_username(client: &Arc<Client>, username: &str) -> ApiResult<Value> {
-    let url = format!("{}/players/search?name={}", WOLVESVILLE_API_URL, username);
+    let url = format!("{}/players/search?username={}", WOLVESVILLE_API_URL, username);
     let response = client
         .get(&url)
         .send()

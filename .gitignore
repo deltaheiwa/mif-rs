@@ -6,3 +6,4 @@ Secrets*.toml
 /.vscode
 /.idea
 /logs
+/res/example_data

@@ -30,3 +30,16 @@ async fn test_get_wolvesville_player_by_id_invalid() {
     assert!(player.is_ok());
     assert!(player.unwrap().is_none());
 }
+
+#[test]
+async fn test_get_wolvesville_player_by_username() {
+    let client = setup();
+    let username = "Username";
+    let player = wolvesville::get_wolvesville_player_by_username(&client, username).await;
+    assert!(player.is_ok());
+    let player = player.unwrap();
+    assert!(player.is_some());
+    let player_value = player.unwrap();
+
+    assert_eq!(player_value["username"], username);
+}

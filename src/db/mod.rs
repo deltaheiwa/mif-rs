@@ -54,6 +54,7 @@ pub async fn create_db() {
 }
 
 async fn initialize_schema(pool: &SqlitePool) -> anyhow::Result<()> {
+    // NOT FINISHED
     let q = r#"
         CREATE TABLE IF NOT EXISTS prefixes (
             guild_id TEXT PRIMARY KEY,
@@ -63,6 +64,26 @@ async fn initialize_schema(pool: &SqlitePool) -> anyhow::Result<()> {
         CREATE TABLE IF NOT EXISTS users (
             discord_id TEXT PRIMARY KEY,
             language_code TEXT NOT NULL
+        );
+
+        CREATE TABLE IF NOT EXISTS wolvesville_clans (
+            id TEXT PRIMARY KEY,
+            name TEXT NOT NULL,
+            description TEXT
+        );
+
+        CREATE TABLE IF NOT EXISTS wolvesville_players (
+            id TEXT PRIMARY KEY,
+            username TEXT NOT NULL,
+            personal_message TEXT,
+            clan_id TEXT,
+        );
+
+        CREATE TABLE IF NOT EXISTS wolvesville_players_previous_usernames (
+            id TEXT PRIMARY KEY,
+            player_id TEXT NOT NULL,
+            username TEXT NOT NULL
+            FOREIGN KEY(player_id) REFERENCES wolvesville_players(id)
         );
     "#;
 
