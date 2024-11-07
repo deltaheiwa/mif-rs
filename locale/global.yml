@@ -68,14 +68,22 @@ commands:
           uk: Статус онлайну
   wov:
     player:
-      no_input:
-        en: "No username provided.\n\nCorrect syntax: `wolvesville player search <username>`"
-        uk: "Не вказано ім'я користувача.\n\nПравильний синтаксис: `wolvesville player search <ім'я_користувача>`"
-      too_short:
-        en: "Username `%{username}` is too short.\n\nPlease provide a username with at least 3 characters"
-        uk: "Ім'я користувача `%{username}` занадто коротке.\n\nБудь ласка, вкажіть ім'я користувача, яке містить принаймні 3 символи"
+      search:
+        no_input:
+          en: "No username provided.\n\nCorrect syntax: `wolvesville player search <username>`"
+          uk: "Не вказано ім'я користувача.\n\nПравильний синтаксис: `wolvesville player search <ім'я_користувача>`"
+        too_short:
+          en: "Username `%{username}` is too short.\n\nPlease provide a username with at least 3 characters"
+          uk: "Ім'я користувача `%{username}` занадто коротке.\n\nБудь ласка, вкажіть ім'я користувача, яке містить принаймні 3 символи"
+        not_found:
+          en:
+          uk:
+
 
 common:
   error:
     en: Error
     uk: Помилка
+  api_error:
+    en: "An error occurred on the server side, while processing the request.\n\nThis is not related to the bot. Please try again later"
+    uk: "На сервері виникла помилка під час обробки запиту.\n\nЦе не пов'язано з ботом. Будь ласка, спробуйте пізніше"

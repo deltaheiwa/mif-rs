@@ -82,7 +82,7 @@ async fn initialize_schema(pool: &SqlitePool) -> anyhow::Result<()> {
         CREATE TABLE IF NOT EXISTS wolvesville_players_previous_usernames (
             id TEXT PRIMARY KEY,
             player_id TEXT NOT NULL,
-            username TEXT NOT NULL
+            username TEXT NOT NULL,
             FOREIGN KEY(player_id) REFERENCES wolvesville_players(id)
         );
     "#;

@@ -12,7 +12,7 @@ async fn on_missing_username_input(error: poise::FrameworkError<'_, Data, Error>
             if input == None {
                 let embed = serenity::CreateEmbed::default()
                     .title(t!("common.error", locale = language))
-                    .description(t!("commands.wov.player.no_input", locale = language))
+                    .description(t!("commands.wov.player.search.no_input", locale = language))
                     .color(serenity::Color::RED);
                 ctx.send(poise::CreateReply::default().reply(true).embed(embed)).await.unwrap();
             }
@@ -39,17 +39,43 @@ pub async fn search(ctx: Context<'_>, username: String) -> Result<(), Error> {
     if username.len() < 3 {
         let embed_too_short = serenity::CreateEmbed::default()
             .title(t!("common.error", locale = language))
-            .description(t!("commands.wov.player.too_short", username = username, locale = language))
+            .description(t!("commands.wov.player.search.too_short", username = username, locale = language))
             .color(serenity::Color::RED);
         ctx.send(poise::CreateReply::default().reply(true).embed(embed_too_short)).await.unwrap();
         return Ok(());
     }
 
-    let player = wolvesville::get_wolvesville_player_by_username(&data.wolvesville_client, &username).await.unwrap();
-    // To check the output of the API call, uncomment the following lines:
-    // let file = File::create("wolvesville_player.json").unwrap();
-    // serde_json::to_writer_pretty(file, &player).unwrap();
+    let player = wolvesville::get_wolvesville_player_by_username(&data.wolvesville_client, &username).await;
+    let player = match player {
+        Ok(player) => player,
+        Err(e) => {
+            error!("An error occurred while running the `wolvesville player search` command: {:?}", e);
+            let embed_error = serenity::CreateEmbed::default()
+                .title(t!("common.error", locale = language))
+                .description(t!("common.api_error", locale = language))
+                .color(serenity::Color::RED);
+            ctx.send(poise::CreateReply::default().reply(true).embed(embed_error)).await.unwrap();
+            return Ok(());
+        }
+    };
+    let player = match player {
+        Some(player) => player,
+        None => {
+            let embed_not_found = serenity::CreateEmbed::default()
+                .title(t!("common.error", locale = language))
+                .description(t!("commands.wov.player.search.not_found", username = username, locale = language))
+                .color(serenity::Color::RED);
+            ctx.send(poise::CreateReply::default().reply(true).embed(embed_not_found)).await.unwrap();
+            return Ok(());
+        }
+    };
 
+
+    let mut embed = serenity::CreateEmbed::default()
+        .title(format!("{}", player.get("username").unwrap().as_str().unwrap()))
+        .description(t!("commands.wov.player.search.description", locale = language));
+
+    ctx.send(poise::CreateReply::default().embed(embed)).await.unwrap();
 
     Ok(())
 }
