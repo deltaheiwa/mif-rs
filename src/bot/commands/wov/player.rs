@@ -73,7 +73,8 @@ pub async fn search(ctx: Context<'_>, username: String) -> Result<(), Error> {
 
     let mut embed = serenity::CreateEmbed::default()
         .title(format!("{}", player.get("username").unwrap().as_str().unwrap()))
-        .description(t!("commands.wov.player.search.description", locale = language));
+        .description(t!("commands.wov.player.search.description", locale = language))
+        .color(serenity::Color::new());
 
     ctx.send(poise::CreateReply::default().embed(embed)).await.unwrap();
 

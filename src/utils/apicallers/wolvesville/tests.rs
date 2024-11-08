@@ -3,7 +3,7 @@ use reqwest::Client;
 
 use tokio::test;
 use dotenvy::dotenv;
-use super::*;
+use crate::utils::apicallers::*;
 
 
 fn setup() -> Arc<Client> {

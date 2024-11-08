@@ -3,13 +3,17 @@ use serde_json::Value;
 use reqwest::{header::{HeaderMap, HeaderValue, AUTHORIZATION}, Client};
 use crate::bot::core::structs::ApiResult;
 
+#[cfg(test)]
+mod tests;
+mod models;
+
 const WOLVESVILLE_API_URL: &str = "https://api.wolvesville.com";
 
 
 pub fn initialize_client() -> Arc<Client> {
     let mut headers = HeaderMap::new();
     headers.insert(AUTHORIZATION, HeaderValue::from_str(format!("Bot {}", std::env::var("WOV_API_TOKEN").unwrap()).as_str()).unwrap());
-    
+
     Arc::new(Client::builder().default_headers(headers).build().unwrap())
 }
 
