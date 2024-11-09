@@ -70,11 +70,16 @@ pub async fn search(ctx: Context<'_>, username: String) -> Result<(), Error> {
         }
     };
 
+    // Converting a string with hex code of the color to u32. If it fails, it will be black (0)
+    let color = u32::from_str_radix(player.profile_icon_color.trim_start_matches("#"), 16).unwrap_or(0);
+
+    debug!("{}", color);
 
     let mut embed = serenity::CreateEmbed::default()
-        .title(format!("{}", player.get("username").unwrap().as_str().unwrap()))
+        .title(format!("{}", player.username))
         .description(t!("commands.wov.player.search.description", locale = language))
-        .color(serenity::Color::new());
+        .color(serenity::Color::new(color));
+        //.thumbnail(player.profile_icon_url);
 
     ctx.send(poise::CreateReply::default().embed(embed)).await.unwrap();
 

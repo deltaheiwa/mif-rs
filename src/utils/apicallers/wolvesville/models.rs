@@ -1,3 +1,5 @@
+use serde::{Serialize, Deserialize};
+
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Avatar {
 	pub height: i32,
@@ -7,18 +9,20 @@ pub struct Avatar {
 	pub width: i32,
 }
 #[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
 pub struct Achievement {
-	pub category: Option<String>,
+	pub category: String,
 
-	pub level: Option<i32>,
+	pub level: i32,
 
-	pub points: Option<i32>,
+	pub points: i32,
 
-	pub points_next_level: Option<i32>,
+	pub points_next_level: i32,
 
-	pub role_id: Option<String>,
+	pub role_id: String,
 }
 #[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
 pub struct GameStats {
 	pub achievements: Option<Vec<Achievement>>,
 
@@ -55,6 +59,7 @@ pub struct GameStats {
 	pub werewolf_win_count: Option<i32>,
 }
 #[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
 pub struct RoleCards {
 	pub ability_id1: Option<String>,
 
@@ -75,7 +80,8 @@ pub struct RoleCards {
 	pub role_ids_advanced: Option<Vec<String>>,
 }
 #[derive(Serialize, Deserialize, Debug)]
-pub struct Root {
+#[serde(rename_all = "camelCase")]
+pub struct WolvesvillePlayer {
 	pub avatars: Option<Vec<Avatar>>,
 
 	pub badge_ids: Option<Vec<String>>,
@@ -88,7 +94,7 @@ pub struct Root {
 
 	pub game_stats: Option<GameStats>,
 
-	pub id: Option<String>,
+	pub id: String,
 
 	pub last_online: Option<String>,
 
@@ -96,9 +102,9 @@ pub struct Root {
 
 	pub personal_message: Option<String>,
 
-	pub profile_icon_color: Option<String>,
+	pub profile_icon_color: String,
 
-	pub profile_icon_id: Option<String>,
+	pub profile_icon_id: String,
 
 	pub ranked_season_best_rank: Option<i32>,
 
@@ -114,8 +120,7 @@ pub struct Root {
 
 	pub sent_roses_count: Option<i32>,
 
-	pub status: Option<String>,
+	pub status: String,
 
-	pub username: Option<String>,
+	pub username: String,
 }
-use serde::{Serialize, Deserialize};
