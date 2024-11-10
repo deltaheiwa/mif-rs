@@ -1,8 +1,10 @@
-use std::fs::File;
+use std::path::Path;
 use poise::serenity_prelude as serenity;
 use crate::bot::core::structs::{Context, Error, Data};
 use crate::utils::{language::get_language, apicallers::wolvesville};
 use logfather::{debug, error};
+use chrono::{DateTime, TimeDelta, Utc};
+use crate::utils::time::get_relative_timestamp;
 
 async fn on_missing_username_input(error: poise::FrameworkError<'_, Data, Error>) {
     match error {
@@ -73,15 +75,37 @@ pub async fn search(ctx: Context<'_>, username: String) -> Result<(), Error> {
     // Converting a string with hex code of the color to u32. If it fails, it will be black (0)
     let color = u32::from_str_radix(player.profile_icon_color.trim_start_matches("#"), 16).unwrap_or(0);
 
-    debug!("{}", color);
+    let image = serenity::CreateAttachment::path(Path::new("res/images/wov_logo.png")).await.unwrap();
 
     let mut embed = serenity::CreateEmbed::default()
         .title(format!("{}", player.username))
         .description(t!("commands.wov.player.search.description", locale = language))
-        .color(serenity::Color::new(color));
-        //.thumbnail(player.profile_icon_url);
+        .color(serenity::Color::new(color))
+        .thumbnail("attachment://wov_logo.png"); // Temporary solution until I manage to render player's equipped avatar
 
-    ctx.send(poise::CreateReply::default().embed(embed)).await.unwrap();
+    embed = match player.personal_message {
+        Some(pm) => embed.field(t!("commands.wov.player.search.personal_message", locale = language), pm, false),
+        None => embed
+    };
 
+    let level = match player.level {
+        Some(level) => level.to_string(),
+        None => "?".to_string()
+    };
+    embed = embed.field(t!("commands.wov.player.search.level", locale = language), level, true);
+
+    embed = embed.field(t!("commands.wov.player.search.online_status", locale = language),
+                        t!(format!("commands.wov.player.search.online_status_value.{}", player.status), locale = language), true);
+
+    let last_online = DateTime::parse_from_rfc3339(&player.last_online.unwrap()).unwrap();
+
+    let last_online = match Utc::now() - last_online.with_timezone(&Utc) < TimeDelta::minutes(7) {
+        true => "Just now".to_string(),
+        false => get_relative_timestamp(&last_online.timestamp())
+    };
+    
+    embed = embed.field(t!("commands.wov.player.search.last_online", locale = language), last_online, true);
+
+    ctx.send(poise::CreateReply::default().embed(embed).attachment(image)).await.unwrap();
     Ok(())
 }

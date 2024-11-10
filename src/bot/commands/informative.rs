@@ -89,7 +89,7 @@ fn build_user_embed(user: &serenity::User, language: &String, embed_color: Optio
 
     embed = embed.field(
         format!("{}", t!("commands.info.user_info.fields.created_at", locale = language)),
-        format!("{}", time::get_relative_timestamp(user.created_at())),
+        format!("{}", time::get_relative_timestamp(&user.created_at().timestamp())),
         true
     );
 
@@ -105,7 +105,7 @@ fn build_member_embed(member: &serenity::Member, language: &String, embed_color:
     if let Some(joined_at) = member.joined_at {
         embed = embed.field(
             format!("{}", t!("commands.info.user_info.fields.joined_at", locale = language)),
-            format!("{}", time::get_relative_timestamp(joined_at)),
+            format!("{}", time::get_relative_timestamp(&joined_at.timestamp())),
             true
         );
     }
