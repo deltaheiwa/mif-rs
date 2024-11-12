@@ -4,7 +4,7 @@ use crate::bot::core::structs::{Context, Error, Data};
 use crate::utils::{language::get_language, apicallers::wolvesville};
 use logfather::{debug, error};
 use chrono::{DateTime, TimeDelta, Utc};
-use crate::utils::time::get_relative_timestamp;
+use crate::utils::{time::{get_long_date, get_relative_timestamp}, emojis};
 
 async fn on_missing_username_input(error: poise::FrameworkError<'_, Data, Error>) {
     match error {
@@ -104,11 +104,38 @@ pub async fn search(ctx: Context<'_>, username: String) -> Result<(), Error> {
     };
     
     embed = embed.field(t!("commands.wov.player.search.last_online", locale = language), last_online, true);
-    
-    let total_playtime = match player.game_stats.unwrap().total_play_time_in_minutes {
-        Some(playtime) => playtime.to_string(),
+
+    let total_playtime = player.game_stats.total_play_time_in_minutes.unwrap_or_else(|| -1);
+
+    let created_at = if let Some(created_at) = player.creation_time  {
+        let created_at = DateTime::parse_from_rfc3339(&created_at).unwrap();
+        get_long_date(&created_at.timestamp())
+    } else if total_playtime < 0 {
+        format!("{}", t!("commands.wov.player.search.created_on.unknown", locale = language))
+    } else {
+        format!("{}", t!("commands.wov.player.search.created_on.august_3rd_2018", locale = language))
+    };
+
+    embed = embed.field(t!("commands.wov.player.search.created_on", locale = language), created_at, true);
+
+    let roses_sent = match player.sent_roses_count {
+        Some(roses_sent) => roses_sent.to_string(),
         None => "?".to_string()
     };
+
+    let roses_received = match player.received_roses_count {
+        Some(roses_received) => roses_received.to_string(),
+        None => "?".to_string()
+    };
+
+    embed = embed.field(
+        t!("commands.wov.player.search.roses", locale = language),
+        t!("commands.wov.player.search.roses.value", roses_sent = roses_sent, roses_received = roses_received, rose_emoji = emojis::SINGLE_ROSE, locale = language),
+        true
+    );
+
+    // Empty field to make the embed look better
+    embed = embed.field("\u{200B}", "\u{200B}", false);
 
     ctx.send(poise::CreateReply::default().embed(embed).attachment(image)).await.unwrap();
     Ok(())

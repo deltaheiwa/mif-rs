@@ -42,7 +42,7 @@ pub struct Bot {
 }
 
 impl Bot {
-    pub async fn new(token: std::string::String) -> Self {
+    pub async fn new(token: String) -> Self {
         let client = build_client(token).await.expect("Failed to build the client");
         Bot { client }
     }
@@ -54,7 +54,7 @@ impl Bot {
     }
 }
 
-async fn build_client(token: std::string::String) -> Result<serenity::Client, serenity::Error> {
+async fn build_client(token: String) -> Result<serenity::Client, serenity::Error> {
     let intents = serenity::GatewayIntents::non_privileged()
         | serenity::GatewayIntents::MESSAGE_CONTENT 
         | serenity::GatewayIntents::GUILD_MESSAGES

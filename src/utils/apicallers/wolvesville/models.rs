@@ -92,7 +92,7 @@ pub struct WolvesvillePlayer {
 
 	pub equipped_avatar: Option<Avatar>,
 
-	pub game_stats: Option<GameStats>,
+	pub game_stats: GameStats,
 
 	pub id: String,
 
