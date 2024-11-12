@@ -98,13 +98,17 @@ pub async fn search(ctx: Context<'_>, username: String) -> Result<(), Error> {
                         t!(format!("commands.wov.player.search.online_status_value.{}", player.status), locale = language), true);
 
     let last_online = DateTime::parse_from_rfc3339(&player.last_online.unwrap()).unwrap();
-
     let last_online = match Utc::now() - last_online.with_timezone(&Utc) < TimeDelta::minutes(7) {
         true => "Just now".to_string(),
         false => get_relative_timestamp(&last_online.timestamp())
     };
     
     embed = embed.field(t!("commands.wov.player.search.last_online", locale = language), last_online, true);
+    
+    let total_playtime = match player.game_stats.unwrap().total_play_time_in_minutes {
+        Some(playtime) => playtime.to_string(),
+        None => "?".to_string()
+    };
 
     ctx.send(poise::CreateReply::default().embed(embed).attachment(image)).await.unwrap();
     Ok(())
