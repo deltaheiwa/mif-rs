@@ -76,9 +76,38 @@ commands:
           en: "Username `%{username}` is too short.\n\nPlease provide a username with at least 3 characters"
           uk: "Ім'я користувача `%{username}` занадто коротке.\n\nБудь ласка, вкажіть ім'я користувача, яке містить принаймні 3 символи"
         not_found:
-          en:
-          uk:
-
+          en: "Couldn't find any user with that username. *Maybe they changed it?*"
+          uk: "Не вдалося знайти жодного користувача з таким ім'ям. *Можливо, вони його змінили?*"
+        created_on:
+          en: created_on
+          uk: created_on
+          august_3rd_2018:
+            en: august_3rd_2018
+            uk: august_3rd_2018
+          unknown:
+            en: unknown
+            uk: unknown
+        description:
+          en: description
+          uk: description
+        last_online:
+          en: last_online
+          uk: "Востаннє був онлайн"
+        level:
+          en: level
+          uk: level
+        online_status:
+          en: online_status
+          uk: online_status
+        personal_message:
+          en: personal_message
+          uk: personal_message
+        roses:
+          en: Roses
+          uk: Троянди
+          value:
+            en: "Roses received: **%{roses_received}** %{rose_emoji}\nRoses sent: **%{roses_sent}** %{rose_emoji}\nDiff: **%{rose_difference}**"
+            uk: "Отримано троянд: **%{roses_received}** %{rose_emoji}\nВідправлено троянд: **%{roses_sent}** %{rose_emoji}\nРізниця: **%{rose_difference}**"
 
 common:
   error:

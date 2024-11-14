@@ -1,1 +1,0 @@
-pub const SINGLE_ROSE: &str = "<:single_rose:1027129510824513556>";  // Temporary

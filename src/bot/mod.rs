@@ -104,6 +104,7 @@ async fn build_client(token: String) -> Result<serenity::Client, serenity::Error
                     prefix_cache: Arc::new(Mutex::new(LruCache::new(NonZeroUsize::new(100).unwrap()))),
                     language_cache: Arc::new(Mutex::new(LruCache::new(NonZeroUsize::new(100).unwrap()))),
                     wolvesville_client: wolvesville::initialize_client(),
+                    custom_emojis: ctx.get_application_emojis().await.unwrap().iter().map(|emoji| (emoji.name.clone(), emoji.clone())).collect(),
                 };
 
                 // I also need to insert the data into the context of serenity
