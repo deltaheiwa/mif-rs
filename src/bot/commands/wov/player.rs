@@ -1,10 +1,12 @@
+use std::fs::File;
 use std::path::Path;
 use poise::serenity_prelude as serenity;
-use crate::bot::core::structs::{Context, Error, Data};
+use crate::bot::core::structs::{Context, Error, Data, CustomEmoji};
 use crate::utils::{language::get_language, apicallers::wolvesville};
 use logfather::{debug, error};
 use chrono::{DateTime, TimeDelta, Utc};
-use crate::utils::{time::{get_long_date, get_relative_timestamp}, emojis};
+use crate::utils::apicallers::save_to_file;
+use crate::utils::time::{get_long_date, get_relative_timestamp};
 
 async fn on_missing_username_input(error: poise::FrameworkError<'_, Data, Error>) {
     match error {
@@ -72,6 +74,12 @@ pub async fn search(ctx: Context<'_>, username: String) -> Result<(), Error> {
         }
     };
 
+    // debug!("{:?}", player);
+    // save_to_file(&player, player.username.as_str());
+
+    // 434 Bytes all private
+    // 1.2 kB all private with redundant fields
+
     // Converting a string with hex code of the color to u32. If it fails, it will be black (0)
     let color = u32::from_str_radix(player.profile_icon_color.trim_start_matches("#"), 16).unwrap_or(0);
 
@@ -119,23 +127,41 @@ pub async fn search(ctx: Context<'_>, username: String) -> Result<(), Error> {
     embed = embed.field(t!("commands.wov.player.search.created_on", locale = language), created_at, true);
 
     let roses_sent = match player.sent_roses_count {
+        Some(-1) => "Private".to_string(),
         Some(roses_sent) => roses_sent.to_string(),
         None => "?".to_string()
     };
 
     let roses_received = match player.received_roses_count {
+        Some(-1) => "Private".to_string(),
         Some(roses_received) => roses_received.to_string(),
         None => "?".to_string()
     };
 
+    let rose_difference = match player.received_roses_count {
+        Some(received) => received - player.sent_roses_count.unwrap_or(0),
+        None => 0
+    };
+
     embed = embed.field(
         t!("commands.wov.player.search.roses", locale = language),
-        t!("commands.wov.player.search.roses.value", roses_sent = roses_sent, roses_received = roses_received, rose_emoji = emojis::SINGLE_ROSE, locale = language),
+        t!("commands.wov.player.search.roses.value",
+            roses_sent = roses_sent,
+            roses_received = roses_received,
+            rose_emoji = ctx.data().custom_emojis.get(CustomEmoji::SINGLE_ROSE).unwrap().to_string(),
+            rose_difference = rose_difference,
+            locale = language),
         true
     );
 
     // Empty field to make the embed look better
     embed = embed.field("\u{200B}", "\u{200B}", false);
+
+    // If ranked season count is -1, then the ranked data is private overall
+    // But if ranked season count is 0, then the data is public but the player hasn't played any ranked games
+    // If the ranked season count is 1 or more, but ranked season skill is -1, then the player hasn't played any ranked games in this season
+
+
 
     ctx.send(poise::CreateReply::default().embed(embed).attachment(image)).await.unwrap();
     Ok(())
