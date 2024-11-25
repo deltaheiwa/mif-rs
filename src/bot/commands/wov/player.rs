@@ -32,10 +32,7 @@ pub async fn player(_ctx: Context<'_>) -> Result<(), Error> {
     Ok(())
 }
 
-#[poise::command(
-    slash_command, prefix_command,
-    on_error = on_missing_username_input
-)]
+#[poise::command(slash_command, prefix_command,on_error = on_missing_username_input)]
 pub async fn search(ctx: Context<'_>, username: String) -> Result<(), Error> {
     let data = ctx.data();
     let language = get_language(data, &ctx.author().id.to_string()).await;
@@ -75,7 +72,7 @@ pub async fn search(ctx: Context<'_>, username: String) -> Result<(), Error> {
     };
 
     // debug!("{:?}", player);
-    // save_to_file(&player, player.username.as_str());
+    save_to_file(&player, player.username.as_str());
 
     // 434 Bytes all private
     // 1.2 kB all private with redundant fields
@@ -161,7 +158,27 @@ pub async fn search(ctx: Context<'_>, username: String) -> Result<(), Error> {
     // But if ranked season count is 0, then the data is public but the player hasn't played any ranked games
     // If the ranked season count is 1 or more, but ranked season skill is -1, then the player hasn't played any ranked games in this season
 
+    let ranked_season_played_count = player.ranked_season_played_count.unwrap_or(-1);
 
+    if ranked_season_played_count == -1 {
+        embed = embed.field(t!("commands.wov.player.search.ranked_season", locale = language), t!("commands.wov.player.search.ranked_season.private", locale = language), true);
+    } else if ranked_season_played_count == 0 {
+        embed = embed.field(t!("commands.wov.player.search.ranked_season", locale = language), t!("commands.wov.player.search.ranked_season.no_games", locale = language), true);
+    } else {
+        let ranked_season_skill = player.ranked_season_skill.unwrap_or(-1);
+        let ranked_season_max_skill = player.ranked_season_max_skill.unwrap_or(-1);
+        let ranked_season_best_rank = player.ranked_season_best_rank.unwrap_or(-1);
+
+        embed = embed.field(
+            t!("commands.wov.player.search.ranked_season", locale = language),
+            t!("commands.wov.player.search.ranked_season.value",
+                skill = ranked_season_skill,
+                max_skill = ranked_season_max_skill,
+                best_rank = ranked_season_best_rank,
+                locale = language),
+            true
+        );
+    }
 
     ctx.send(poise::CreateReply::default().embed(embed).attachment(image)).await.unwrap();
     Ok(())
