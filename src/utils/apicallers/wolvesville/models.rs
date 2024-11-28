@@ -26,37 +26,37 @@ pub struct Achievement {
 pub struct GameStats {
 	pub achievements: Option<Vec<Achievement>>,
 
-	pub exit_game_after_death_count: Option<i32>,
+	pub exit_game_after_death_count: i32,
 
-	pub exit_game_by_suicide_count: Option<i32>,
+	pub exit_game_by_suicide_count: i32,
 
-	pub games_killed_count: Option<i32>,
+	pub games_killed_count: i32,
 
-	pub games_survived_count: Option<i32>,
+	pub games_survived_count: i32,
 
-	pub solo_lose_count: Option<i32>,
+	pub solo_lose_count: i32,
 
-	pub solo_win_count: Option<i32>,
+	pub solo_win_count: i32,
 
-	pub total_lose_count: Option<i32>,
+	pub total_lose_count: i32,
 
-	pub total_play_time_in_minutes: Option<i32>,
+	pub total_play_time_in_minutes: i32,
 
-	pub total_tie_count: Option<i32>,
+	pub total_tie_count: i32,
 
-	pub total_win_count: Option<i32>,
+	pub total_win_count: i32,
 
-	pub village_lose_count: Option<i32>,
+	pub village_lose_count: i32,
 
-	pub village_win_count: Option<i32>,
+	pub village_win_count: i32,
 
-	pub voting_lose_count: Option<i32>,
+	pub voting_lose_count: i32,
 
-	pub voting_win_count: Option<i32>,
+	pub voting_win_count: i32,
 
-	pub werewolf_lose_count: Option<i32>,
+	pub werewolf_lose_count: i32,
 
-	pub werewolf_win_count: Option<i32>,
+	pub werewolf_win_count: i32,
 }
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]

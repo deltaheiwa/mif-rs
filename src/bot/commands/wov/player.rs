@@ -104,18 +104,16 @@ pub async fn search(ctx: Context<'_>, username: String) -> Result<(), Error> {
 
     let last_online = DateTime::parse_from_rfc3339(&player.last_online.unwrap()).unwrap();
     let last_online = match Utc::now() - last_online.with_timezone(&Utc) < TimeDelta::minutes(7) {
-        true => "Just now".to_string(),
+        true => "commands.wov.player.search.last_online.just_now".to_string(),
         false => get_relative_timestamp(&last_online.timestamp())
     };
     
-    embed = embed.field(t!("commands.wov.player.search.last_online", locale = language), last_online, true);
-
-    let total_playtime = player.game_stats.total_play_time_in_minutes.unwrap_or_else(|| -1);
+    embed = embed.field(t!("commands.wov.player.search.last_online", locale = language), t!(last_online, locale = language), true);
 
     let created_at = if let Some(created_at) = player.creation_time  {
         let created_at = DateTime::parse_from_rfc3339(&created_at).unwrap();
         get_long_date(&created_at.timestamp())
-    } else if total_playtime < 0 {
+    } else if player.game_stats.total_play_time_in_minutes < 0 {
         format!("{}", t!("commands.wov.player.search.created_on.unknown", locale = language))
     } else {
         format!("{}", t!("commands.wov.player.search.created_on.august_3rd_2018", locale = language))
@@ -175,10 +173,29 @@ pub async fn search(ctx: Context<'_>, username: String) -> Result<(), Error> {
                 skill = ranked_season_skill,
                 max_skill = ranked_season_max_skill,
                 best_rank = ranked_season_best_rank,
+                seasons_played = ranked_season_played_count,
                 locale = language),
             true
         );
     }
+
+    if player.game_stats.total_win_count == -1 {
+        embed = embed.field(
+            t!("commands.wov.player.search.general_stats", locale = language),
+            t!("commands.wov.player.search.private", locale = language),
+            true
+        );
+
+        embed = embed.field(
+            t!("commands.wov.player.search.team_stats", locale = language),
+            t!("commands.wov.player.search.private", locale = language),
+            true
+        );
+    } else {
+        let total_amount_of_games = player.game_stats.total_win_count + player.game_stats.total_lose_count + player.game_stats.total_tie_count;
+    }
+
+
 
     ctx.send(poise::CreateReply::default().embed(embed).attachment(image)).await.unwrap();
     Ok(())
