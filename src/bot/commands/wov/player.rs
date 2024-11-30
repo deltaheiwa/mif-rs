@@ -2,11 +2,11 @@ use std::fs::File;
 use std::path::Path;
 use poise::serenity_prelude as serenity;
 use crate::bot::core::structs::{Context, Error, Data, CustomEmoji};
-use crate::utils::{language::get_language, apicallers::wolvesville};
+use crate::utils::{language::get_language, apicallers::wolvesville, math::calculate_percentage};
 use logfather::{debug, error};
 use chrono::{DateTime, TimeDelta, Utc};
 use crate::utils::apicallers::save_to_file;
-use crate::utils::time::{get_long_date, get_relative_timestamp};
+use crate::utils::time::{get_long_date, get_relative_timestamp, pretty_time_delta};
 
 async fn on_missing_username_input(error: poise::FrameworkError<'_, Data, Error>) {
     match error {
@@ -72,7 +72,7 @@ pub async fn search(ctx: Context<'_>, username: String) -> Result<(), Error> {
     };
 
     // debug!("{:?}", player);
-    save_to_file(&player, player.username.as_str());
+    // save_to_file(&player, player.username.as_str());
 
     // 434 Bytes all private
     // 1.2 kB all private with redundant fields
@@ -100,21 +100,21 @@ pub async fn search(ctx: Context<'_>, username: String) -> Result<(), Error> {
     embed = embed.field(t!("commands.wov.player.search.level", locale = language), level, true);
 
     embed = embed.field(t!("commands.wov.player.search.online_status", locale = language),
-                        t!(format!("commands.wov.player.search.online_status_value.{}", player.status), locale = language), true);
+                        t!(format!("commands.wov.player.search.online_status.{}", player.status), locale = language), true);
 
     let last_online = DateTime::parse_from_rfc3339(&player.last_online.unwrap()).unwrap();
     let last_online = match Utc::now() - last_online.with_timezone(&Utc) < TimeDelta::minutes(7) {
-        true => "commands.wov.player.search.last_online.just_now".to_string(),
+        true => format!("{}", t!("commands.wov.player.search.last_online.just_now")),
         false => get_relative_timestamp(&last_online.timestamp())
     };
     
-    embed = embed.field(t!("commands.wov.player.search.last_online", locale = language), t!(last_online, locale = language), true);
+    embed = embed.field(t!("commands.wov.player.search.last_online", locale = language), last_online, true);
 
     let created_at = if let Some(created_at) = player.creation_time  {
         let created_at = DateTime::parse_from_rfc3339(&created_at).unwrap();
         get_long_date(&created_at.timestamp())
     } else if player.game_stats.total_play_time_in_minutes < 0 {
-        format!("{}", t!("commands.wov.player.search.created_on.unknown", locale = language))
+        format!("{}", t!("commands.wov.player.search.created_on.private", locale = language))
     } else {
         format!("{}", t!("commands.wov.player.search.created_on.august_3rd_2018", locale = language))
     };
@@ -163,7 +163,11 @@ pub async fn search(ctx: Context<'_>, username: String) -> Result<(), Error> {
     } else if ranked_season_played_count == 0 {
         embed = embed.field(t!("commands.wov.player.search.ranked_season", locale = language), t!("commands.wov.player.search.ranked_season.no_games", locale = language), true);
     } else {
-        let ranked_season_skill = player.ranked_season_skill.unwrap_or(-1);
+        // No games played so skill resets to 1500 (data is not private)
+        let ranked_season_skill = match player.ranked_season_skill.unwrap_or(-1) {
+            -1 => 1500,
+            skill => skill
+        };
         let ranked_season_max_skill = player.ranked_season_max_skill.unwrap_or(-1);
         let ranked_season_best_rank = player.ranked_season_best_rank.unwrap_or(-1);
 
@@ -179,20 +183,51 @@ pub async fn search(ctx: Context<'_>, username: String) -> Result<(), Error> {
         );
     }
 
-    if player.game_stats.total_win_count == -1 {
+    if player.game_stats.total_win_count < 0 {
         embed = embed.field(
             t!("commands.wov.player.search.general_stats", locale = language),
             t!("commands.wov.player.search.private", locale = language),
             true
         );
+    } else {
+        let total_amount_of_games = (
+            player.game_stats.total_win_count +
+            player.game_stats.total_lose_count +
+            player.game_stats.total_tie_count +
+            player.game_stats.exit_game_by_suicide_count
+        );
 
+        let total_playtime = match player.game_stats.total_play_time_in_minutes {
+            -1 => format!("{}", t!("commands.wov.player.search.private", locale = language)),
+            minutes => pretty_time_delta(&TimeDelta::minutes(minutes as i64))
+        };
+
+        embed = embed.field(
+            t!("commands.wov.player.search.general_stats", locale = language),
+            t!(
+                "commands.wov.player.search.general_stats.value",
+                total_games = total_amount_of_games,
+                total_wins = player.game_stats.total_win_count,
+                win_percentage = format!("{:.2}", calculate_percentage(player.game_stats.total_win_count, total_amount_of_games)),
+                total_losses = player.game_stats.total_lose_count,
+                lose_percentage = format!("{:.2}", calculate_percentage(player.game_stats.total_lose_count, total_amount_of_games)),
+                total_ties = player.game_stats.total_tie_count,
+                tie_percentage = format!("{:.2}", calculate_percentage(player.game_stats.total_tie_count, total_amount_of_games)),
+                total_flees = player.game_stats.exit_game_by_suicide_count,
+                flee_percentage = format!("{:.2}", calculate_percentage(player.game_stats.exit_game_by_suicide_count, total_amount_of_games)),
+                total_playtime = total_playtime,
+                locale = language
+            ),
+            true
+        );
+    }
+
+    if player.game_stats.village_win_count < 0 {
         embed = embed.field(
             t!("commands.wov.player.search.team_stats", locale = language),
             t!("commands.wov.player.search.private", locale = language),
             true
         );
-    } else {
-        let total_amount_of_games = player.game_stats.total_win_count + player.game_stats.total_lose_count + player.game_stats.total_tie_count;
     }
 
 

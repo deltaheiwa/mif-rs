@@ -84,7 +84,7 @@ commands:
           august_3rd_2018:
             en: august_3rd_2018
             uk: august_3rd_2018
-          unknown:
+          private:
             en: unknown
             uk: unknown
         description:
@@ -93,6 +93,9 @@ commands:
         last_online:
           en: last_online
           uk: "Востаннє був онлайн"
+          just_now:
+            en: just_now
+            uk: just_now
         level:
           en: level
           uk: level
@@ -108,11 +111,16 @@ commands:
           value:
             en: "Roses received: **%{roses_received}** %{rose_emoji}\nRoses sent: **%{roses_sent}** %{rose_emoji}\nDiff: **%{rose_difference}**"
             uk: "Отримано троянд: **%{roses_received}** %{rose_emoji}\nВідправлено троянд: **%{roses_sent}** %{rose_emoji}\nРізниця: **%{rose_difference}**"
-
+        general_stats:
+          en: General stats
+          uk: Загальна статистика
+          value:
+            en: "Total games played: **%{total_games}**\nTotal wins: **%{total_wins} (%{win_percentage}%)**\nTotal defeats: **%{total_losses} (%{lose_percentage}%)**\nTotal ties: **%{total_ties} (%{tie_percentage}%)**\nFlee count: **%{total_flees} (%{flee_percentage}%)**\nTotal playtime: **%{total_playtime}**"
+            uk: "Всього ігор: **%{total_games}**\nВсього перемог: **%{total_wins} (%{win_percentage}%)**\nВсього поразок: **%{total_losses} (%{lose_percentage}%)**\nВсього нічиїх: **%{total_ties} (%{tie_percentage}%)**\nКількість втеч: **%{total_flees} (%{flee_percentage}%)**\nВсього часу в грі: **%{total_playtime}**"
 common:
   error:
     en: Error
     uk: Помилка
-  api_error:
+  api_e(rror:
     en: "An error occurred on the server side, while processing the request.\n\nThis is not related to the bot. Please try again later"
     uk: "На сервері виникла помилка під час обробки запиту.\n\nЦе не пов'язано з ботом. Будь ласка, спробуйте пізніше"
