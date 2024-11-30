@@ -3,5 +3,5 @@ pub mod logger;
 pub mod time;
 pub mod apicallers;
 mod image;
-mod math;
+pub mod math;
 mod tests;
