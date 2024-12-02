@@ -1,4 +1,3 @@
-use std::fs::File;
 use std::path::Path;
 use poise::serenity_prelude as serenity;
 use crate::bot::core::structs::{Context, Error, Data, CustomEmoji};
@@ -190,12 +189,11 @@ pub async fn search(ctx: Context<'_>, username: String) -> Result<(), Error> {
             true
         );
     } else {
-        let total_amount_of_games = (
+        let total_amount_of_games =
             player.game_stats.total_win_count +
             player.game_stats.total_lose_count +
             player.game_stats.total_tie_count +
-            player.game_stats.exit_game_by_suicide_count
-        );
+            player.game_stats.exit_game_by_suicide_count;
 
         let total_playtime = match player.game_stats.total_play_time_in_minutes {
             -1 => format!("{}", t!("commands.wov.player.search.private", locale = language)),
@@ -226,7 +224,28 @@ pub async fn search(ctx: Context<'_>, username: String) -> Result<(), Error> {
         embed = embed.field(
             t!("commands.wov.player.search.team_stats", locale = language),
             t!("commands.wov.player.search.private", locale = language),
-            true
+            false
+        );
+    } else {
+        embed = embed.field(
+            t!("commands.wov.player.search.team_stats", locale = language),
+            t!(
+                "commands.wov.player.search.team_stats.value",
+                village_wins = player.game_stats.village_win_count,
+                village_losses = player.game_stats.village_lose_count,
+                village_wr = format!("{:.2}", calculate_percentage(player.game_stats.village_win_count, player.game_stats.village_win_count + player.game_stats.village_lose_count)),
+                werewolf_wins = player.game_stats.werewolf_win_count,
+                werewolf_losses = player.game_stats.werewolf_lose_count,
+                werewolf_wr = format!("{:.2}", calculate_percentage(player.game_stats.werewolf_win_count, player.game_stats.werewolf_win_count + player.game_stats.werewolf_lose_count)),
+                voting_wins = player.game_stats.voting_win_count,
+                voting_losses = player.game_stats.voting_lose_count,
+                voting_wr = format!("{:.2}", calculate_percentage(player.game_stats.voting_win_count, player.game_stats.voting_win_count + player.game_stats.voting_lose_count)),
+                solo_wins = player.game_stats.solo_win_count,
+                solo_losses = player.game_stats.solo_lose_count,
+                solo_wr = format!("{:.2}", calculate_percentage(player.game_stats.solo_win_count, player.game_stats.solo_win_count + player.game_stats.solo_lose_count)),
+                locale = language
+            ),
+            false
         );
     }
 

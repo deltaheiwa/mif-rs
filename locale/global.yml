@@ -117,10 +117,16 @@ commands:
           value:
             en: "Total games played: **%{total_games}**\nTotal wins: **%{total_wins} (%{win_percentage}%)**\nTotal defeats: **%{total_losses} (%{lose_percentage}%)**\nTotal ties: **%{total_ties} (%{tie_percentage}%)**\nFlee count: **%{total_flees} (%{flee_percentage}%)**\nTotal playtime: **%{total_playtime}**"
             uk: "Всього ігор: **%{total_games}**\nВсього перемог: **%{total_wins} (%{win_percentage}%)**\nВсього поразок: **%{total_losses} (%{lose_percentage}%)**\nВсього нічиїх: **%{total_ties} (%{tie_percentage}%)**\nКількість втеч: **%{total_flees} (%{flee_percentage}%)**\nВсього часу в грі: **%{total_playtime}**"
+        team_stats:
+          en: Team stats
+          uk: Командна статистика
+          value:
+            en: "Village: **%{village_wins}** Wins/**%{village_losses}** Defeats  **(%{village_wr}% wr)**\nWerewolves: **%{werewolf_wins}** Wins/**%{werewolf_losses}** Defeats  **(%{werewolf_wr}% wr)**\nSolo voting: **%{voting_wins}** Wins/**%{voting_losses}** Defeats  **(%{voting_wr}% wr)**\nSolo killer: **%{solo_wins}** Wins/**%{solo_losses}** Defeats  **(%{solo_wr}% wr)**"
+            uk: "Селяни: **%{village_wins}** Перемог/**%{village_losses}** Поразок  **(%{village_wr}% wr)**\nПеревертні: **%{werewolf_wins}** Перемог/**%{werewolf_losses}** Поразок  **(%{werewolf_wr}% wr)**\nОдиночне голосування: **%{voting_wins}** Перемог/**%{voting_losses}** Поразок  **(%{voting_wr}% wr)**\nОдиночний вбивця: **%{solo_wins}** Перемог/**%{solo_losses}** Поразок  **(%{solo_wr}% wr)**"
 common:
   error:
     en: Error
     uk: Помилка
-  api_e(rror:
+  api_error:
     en: "An error occurred on the server side, while processing the request.\n\nThis is not related to the bot. Please try again later"
     uk: "На сервері виникла помилка під час обробки запиту.\n\nЦе не пов'язано з ботом. Будь ласка, спробуйте пізніше"
