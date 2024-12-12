@@ -249,6 +249,47 @@ pub async fn search(ctx: Context<'_>, username: String) -> Result<(), Error> {
         );
     }
 
+    match player.clan_id {
+        Some(clan_id) => {
+            let clan_info = wolvesville::get_wolvesville_clan_info_by_id(&data.wolvesville_client, &clan_id).await;
+            let clan_info = clan_info.unwrap_or_else(|e| {
+                error!("An error occurred while running the `wolvesville player search` command at request for the clan: {:?}", e);
+                None
+            });
+            match clan_info {
+                Some(clan_info) => {
+                    let clan_description: String = match clan_info.description {
+                        Some(description) => {
+                            match description.split_once('\n') {
+                                Some((first_line, _)) => format!("{}***...***", first_line),
+                                None => description
+                            }
+                        },
+                        None => format!("{}", t!("commands.wov.player.search.no_description", locale = language))
+                    };
+                    embed = embed.field(
+                        t!("commands.wov.player.search.clan", locale = language),
+                        t!(
+                            "commands.wov.player.search.clan.value",
+                            clan_tag = clan_info.tag.unwrap_or(" ".to_string()), locale = language,
+                            clan_name = clan_info.name,
+                            clan_language = clan_info.language.to_lowercase(),
+                            clan_description = clan_description
+                            ),
+                        false
+                    );
+                },
+                None => {
+                    // This may not trigger, because clans themselves can't be private, but this *might* change in the future, so consider it a safety measure
+                    embed = embed.field(t!("commands.wov.player.search.clan", locale = language), t!("commands.wov.player.search.clan_hidden", locale = language), false);
+                }
+            }
+        },
+        None => {
+            embed = embed.field(t!("commands.wov.player.search.clan", locale = language), t!("commands.wov.player.search.no_clan", locale = language), false);
+        }
+    }
+
 
 
     ctx.send(poise::CreateReply::default().embed(embed).attachment(image)).await.unwrap();

@@ -123,6 +123,11 @@ commands:
           value:
             en: "Village: **%{village_wins}** Wins/**%{village_losses}** Defeats  **(%{village_wr}% wr)**\nWerewolves: **%{werewolf_wins}** Wins/**%{werewolf_losses}** Defeats  **(%{werewolf_wr}% wr)**\nSolo voting: **%{voting_wins}** Wins/**%{voting_losses}** Defeats  **(%{voting_wr}% wr)**\nSolo killer: **%{solo_wins}** Wins/**%{solo_losses}** Defeats  **(%{solo_wr}% wr)**"
             uk: "Селяни: **%{village_wins}** Перемог/**%{village_losses}** Поразок  **(%{village_wr}% wr)**\nПеревертні: **%{werewolf_wins}** Перемог/**%{werewolf_losses}** Поразок  **(%{werewolf_wr}% wr)**\nОдиночне голосування: **%{voting_wins}** Перемог/**%{voting_losses}** Поразок  **(%{voting_wr}% wr)**\nОдиночний вбивця: **%{solo_wins}** Перемог/**%{solo_losses}** Поразок  **(%{solo_wr}% wr)**"
+        clan:
+            en: Clan
+            uk: Клан
+            value:
+                en: "`%{clan_tag}` | **%{clan_name}** :flag_%{clan_language}: \n%{clan_description}"
 common:
   error:
     en: Error
