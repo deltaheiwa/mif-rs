@@ -83,21 +83,23 @@ async fn initialize_schema(pool: &SqlitePool) -> anyhow::Result<()> {
             clan_id TEXT,
             json JSON NOT NULL,
             timestamp INTEGER NOT NULL,
-            FOREIGN KEY(clan_id) REFERENCES wolvesville_clans(id)
+            FOREIGN KEY(clan_id) REFERENCES wolvesville_clans(id) ON DELETE SET NULL
         );
 
         CREATE TABLE IF NOT EXISTS wolvesville_players_previous_usernames (
-            id TEXT PRIMARY KEY,
             player_id TEXT NOT NULL,
             username TEXT NOT NULL,
-            FOREIGN KEY(player_id) REFERENCES wolvesville_players(id)
+            timestamp INTEGER NOT NULL,
+            PRIMARY KEY(player_id, timestamp),
+            FOREIGN KEY(player_id) REFERENCES wolvesville_players(id) ON DELETE CASCADE
         );
 
         CREATE TABLE IF NOT EXISTS wolvesville_players_ranked_skill (
-            player_id TEXT PRIMARY KEY,
+            player_id TEXT NOT NULL,
             skill INTEGER NOT NULL,
             timestamp INTEGER NOT NULL,
-            FOREIGN KEY(player_id) REFERENCES wolvesville_players(id)
+            PRIMARY KEY(player_id, timestamp),
+            FOREIGN KEY(player_id) REFERENCES wolvesville_players(id) ON DELETE CASCADE
         );
     "#;
 
