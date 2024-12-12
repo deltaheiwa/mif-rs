@@ -83,7 +83,7 @@ pub async fn search(ctx: Context<'_>, username: String) -> Result<(), Error> {
 
     let mut embed = serenity::CreateEmbed::default()
         .title(format!("{}", player.username))
-        .description(t!("commands.wov.player.search.description", locale = language))
+        .description(t!("commands.wov.player.search.description.no_previous_username", locale = language))
         .color(serenity::Color::new(color))
         .thumbnail("attachment://wov_logo.png"); // Temporary solution until I manage to render player's equipped avatar
 
@@ -281,7 +281,7 @@ pub async fn search(ctx: Context<'_>, username: String) -> Result<(), Error> {
                 },
                 None => {
                     // This may not trigger, because clans themselves can't be private, but this *might* change in the future, so consider it a safety measure
-                    embed = embed.field(t!("commands.wov.player.search.clan", locale = language), t!("commands.wov.player.search.clan_hidden", locale = language), false);
+                    embed = embed.field(t!("commands.wov.player.search.clan", locale = language), t!("commands.wov.player.search.clan.hidden", locale = language), false);
                 }
             }
         },

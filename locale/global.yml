@@ -79,32 +79,48 @@ commands:
           en: "Couldn't find any user with that username. *Maybe they changed it?*"
           uk: "Не вдалося знайти жодного користувача з таким ім'ям. *Можливо, вони його змінили?*"
         created_on:
-          en: created_on
-          uk: created_on
+          en: Created on
+          uk: Створено
           august_3rd_2018:
-            en: august_3rd_2018
-            uk: august_3rd_2018
+            en: August 3, 2018 or before
+            uk: 3-го серпня, 2018 або раніше
           private:
-            en: unknown
-            uk: unknown
+            en: "*Date is private*"
+            uk: "*Дату скрито*"
         description:
-          en: description
-          uk: description
+          no_previous_username:
+            en: "Information I could gather about %{username} on Wolvesville"
+            uk: "Інформація, яку я зміг зібрати про %{username} на Wolvesville"
+          has_previous_username:
+            en: "Information I could gather about %{username} (*also was known as* `%{previous_username}`) on Wolvesville"
+            uk: "Інформація, яку я зміг зібрати про %{username} (*також відомого як* `%{previous_username}`) на Wolvesville"
         last_online:
-          en: last_online
+          en: "Last online"
           uk: "Востаннє був онлайн"
           just_now:
-            en: just_now
-            uk: just_now
+            en: Just now
+            uk: Щойно
         level:
-          en: level
-          uk: level
+          en: Level
+          uk: Рівень
         online_status:
-          en: online_status
-          uk: online_status
+          en: Online status
+          uk: Статус онлайну
+          PLAY:
+            en: Let's play!
+            uk: Граємо!
+          DEFAULT:
+            en: Online
+            uk: Онлайн
+          DND:
+            en: Do not disturb
+            uk: Не турбувати
+          OFFLINE:
+            en: Offline
+            uk: Офлайн
         personal_message:
-          en: personal_message
-          uk: personal_message
+          en: Personal message
+          uk: Особисте повідомлення
         roses:
           en: Roses
           uk: Троянди
@@ -124,10 +140,13 @@ commands:
             en: "Village: **%{village_wins}** Wins/**%{village_losses}** Defeats  **(%{village_wr}% wr)**\nWerewolves: **%{werewolf_wins}** Wins/**%{werewolf_losses}** Defeats  **(%{werewolf_wr}% wr)**\nSolo voting: **%{voting_wins}** Wins/**%{voting_losses}** Defeats  **(%{voting_wr}% wr)**\nSolo killer: **%{solo_wins}** Wins/**%{solo_losses}** Defeats  **(%{solo_wr}% wr)**"
             uk: "Селяни: **%{village_wins}** Перемог/**%{village_losses}** Поразок  **(%{village_wr}% wr)**\nПеревертні: **%{werewolf_wins}** Перемог/**%{werewolf_losses}** Поразок  **(%{werewolf_wr}% wr)**\nОдиночне голосування: **%{voting_wins}** Перемог/**%{voting_losses}** Поразок  **(%{voting_wr}% wr)**\nОдиночний вбивця: **%{solo_wins}** Перемог/**%{solo_losses}** Поразок  **(%{solo_wr}% wr)**"
         clan:
-            en: Clan
-            uk: Клан
-            value:
-                en: "`%{clan_tag}` | **%{clan_name}** :flag_%{clan_language}: \n%{clan_description}"
+          en: Clan
+          uk: Клан
+          value:
+              en: "`%{clan_tag}` | **%{clan_name}** :flag_%{clan_language}: \n%{clan_description}"
+          hidden:
+              en: "*Clan information is hidden*"
+              uk: "*Інформація про клан прихована*"
 common:
   error:
     en: Error
