@@ -1,7 +1,7 @@
 use std::sync::Arc;
 use reqwest::{header::{HeaderMap, HeaderValue, AUTHORIZATION}, Client};
 use crate::bot::core::structs::ApiResult;
-use crate::utils::apicallers::wolvesville::models::WolvesvillePlayer;
+use crate::utils::apicallers::wolvesville::models::{WolvesvilleClan, WolvesvillePlayer};
 
 #[cfg(test)]
 mod tests;
@@ -39,5 +39,18 @@ pub async fn get_wolvesville_player_by_username(client: &Arc<Client>, username: 
         return Ok(None);
     }
     let json = response.json::<WolvesvillePlayer>().await?;
+    Ok(Some(json))
+}
+
+pub async fn get_wolvesville_clan_info_by_id(client: &Arc<Client>, clan_id: &str) -> ApiResult<WolvesvilleClan> {
+    let url = format!("{}/clans/{}/info", WOLVESVILLE_API_URL, clan_id);
+    let response = client
+        .get(&url)
+        .send()
+        .await?;
+    if response.status().as_u16() == 404 {
+        return Ok(None);
+    }
+    let json = response.json::<WolvesvilleClan>().await?;
     Ok(Some(json))
 }

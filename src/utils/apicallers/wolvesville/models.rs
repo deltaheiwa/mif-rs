@@ -124,3 +124,40 @@ pub struct WolvesvillePlayer {
 
 	pub username: String,
 }
+
+
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct WolvesvilleClan {
+	pub creation_time: String,
+
+	pub description: Option<String>,
+
+	pub gems: Option<i32>,
+
+	pub gold: Option<i32>,
+
+	pub icon: String,
+
+	pub icon_color: String,
+
+	pub id: String,
+
+	pub join_type: String,
+
+	pub language: String,
+
+	pub leader_id: String,
+
+	pub member_count: i32,
+
+	pub min_level: i32,
+
+	pub name: String,
+
+	pub quest_history_count: i32,
+
+	pub tag: Option<String>,
+
+	pub xp: i32,
+}

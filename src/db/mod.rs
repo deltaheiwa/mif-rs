@@ -69,7 +69,11 @@ async fn initialize_schema(pool: &SqlitePool) -> anyhow::Result<()> {
         CREATE TABLE IF NOT EXISTS wolvesville_clans (
             id TEXT PRIMARY KEY,
             name TEXT NOT NULL,
-            description TEXT
+            description TEXT,
+            tag TEXT,
+            json JSON NOT NULL,
+            members JSON,
+            timestamp INTEGER NOT NULL
         );
 
         CREATE TABLE IF NOT EXISTS wolvesville_players (
@@ -77,12 +81,22 @@ async fn initialize_schema(pool: &SqlitePool) -> anyhow::Result<()> {
             username TEXT NOT NULL,
             personal_message TEXT,
             clan_id TEXT,
+            json JSON NOT NULL,
+            timestamp INTEGER NOT NULL,
+            FOREIGN KEY(clan_id) REFERENCES wolvesville_clans(id)
         );
 
         CREATE TABLE IF NOT EXISTS wolvesville_players_previous_usernames (
             id TEXT PRIMARY KEY,
             player_id TEXT NOT NULL,
             username TEXT NOT NULL,
+            FOREIGN KEY(player_id) REFERENCES wolvesville_players(id)
+        );
+
+        CREATE TABLE IF NOT EXISTS wolvesville_players_ranked_skill (
+            player_id TEXT PRIMARY KEY,
+            skill INTEGER NOT NULL,
+            timestamp INTEGER NOT NULL,
             FOREIGN KEY(player_id) REFERENCES wolvesville_players(id)
         );
     "#;
