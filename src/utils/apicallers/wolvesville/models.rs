@@ -1,3 +1,4 @@
+use chrono::{DateTime, Utc};
 use serde::{Serialize, Deserialize};
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -79,6 +80,13 @@ pub struct RoleCards {
 
 	pub role_ids_advanced: Option<Vec<String>>,
 }
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct PreviousUsername {
+	pub username: String,
+	pub timestamp: DateTime<Utc>
+}
+
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct WolvesvillePlayer {
@@ -102,6 +110,8 @@ pub struct WolvesvillePlayer {
 
 	pub personal_message: Option<String>,
 
+	pub previous_username: Option<String>,
+
 	pub profile_icon_color: String,
 
 	pub profile_icon_id: String,
@@ -121,6 +131,8 @@ pub struct WolvesvillePlayer {
 	pub sent_roses_count: Option<i32>,
 
 	pub status: String,
+
+	pub timestamp: Option<DateTime<Utc>>,
 
 	pub username: String,
 }

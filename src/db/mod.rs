@@ -4,6 +4,7 @@ use logfather::{info, error};
 
 pub mod users;
 pub mod prefixes;
+pub mod wolvesville;
 
 pub async fn get_pool() -> anyhow::Result<SqlitePool> {
     let (db_url, _) = get_db_url()?;

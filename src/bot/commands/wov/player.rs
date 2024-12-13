@@ -73,17 +73,18 @@ pub async fn search(ctx: Context<'_>, username: String) -> Result<(), Error> {
     // debug!("{:?}", player);
     // save_to_file(&player, player.username.as_str());
 
-    // 434 Bytes all private
-    // 1.2 kB all private with redundant fields
+    // ~434 Bytes all private
+    // ~1.2 kB all private with redundant fields
 
     // Converting a string with hex code of the color to u32. If it fails, it will be black (0)
     let color = u32::from_str_radix(player.profile_icon_color.trim_start_matches("#"), 16).unwrap_or(0);
 
-    let image = serenity::CreateAttachment::path(Path::new("res/images/wov_logo.png")).await.unwrap();
+    let image = serenity::CreateAttachment::path(Path::new("res/images/wov_logo.png")).await.expect("Couldn't find wov_logo.png in res/images");
 
     let mut embed = serenity::CreateEmbed::default()
         .title(format!("{}", player.username))
-        .description(t!("commands.wov.player.search.description.no_previous_username", locale = language))
+        .description(if player.previous_username.is_none() {t!("commands.wov.player.search.description.no_previous_username", username=player.username, locale = language)}
+            else {t!("commands.wov.player.search.description.has_previous_username", username=player.username, previous_username=player.previous_username.unwrap(), locale = language)})
         .color(serenity::Color::new(color))
         .thumbnail("attachment://wov_logo.png"); // Temporary solution until I manage to render player's equipped avatar
 
