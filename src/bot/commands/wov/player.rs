@@ -122,13 +122,13 @@ pub async fn search(ctx: Context<'_>, username: String) -> Result<(), Error> {
     embed = embed.field(t!("commands.wov.player.search.created_on", locale = language), created_at, true);
 
     let roses_sent = match player.sent_roses_count {
-        Some(-1) => "Private".to_string(),
+        Some(-1) => format!("{}", t!("commands.wov.player.search.private", locale = language)),
         Some(roses_sent) => roses_sent.to_string(),
         None => "?".to_string()
     };
 
     let roses_received = match player.received_roses_count {
-        Some(-1) => "Private".to_string(),
+        Some(-1) => format!("{}", t!("commands.wov.player.search.private", locale = language)),
         Some(roses_received) => roses_received.to_string(),
         None => "?".to_string()
     };
