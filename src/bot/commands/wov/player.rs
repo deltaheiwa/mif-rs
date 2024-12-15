@@ -89,22 +89,29 @@ pub async fn search(ctx: Context<'_>, username: String) -> Result<(), Error> {
         .thumbnail("attachment://wov_logo.png"); // Temporary solution until I manage to render player's equipped avatar
 
     embed = match player.personal_message {
-        Some(pm) => embed.field(t!("commands.wov.player.search.personal_message", locale = language), pm, false),
+        Some(pm) => if !pm.is_empty() { embed } else { embed.field(t!("commands.wov.player.search.personal_message", locale = language), pm, false) },
         None => embed
     };
 
     let level = match player.level {
-        Some(level) => level.to_string(),
+        Some(level) => if level > 0 { level.to_string() } else { "?".to_string() },
         None => "?".to_string()
     };
-    embed = embed.field(t!("commands.wov.player.search.level", locale = language), level, true);
+    embed = embed.field(t!("commands.wov.player.search.level", locale = language), format!("**{}**", level), true);
+
+    let status_emoji = match player.status.as_str() {
+        "PLAY" => data.custom_emojis.get(CustomEmoji::LETS_PLAY).unwrap().to_string(),
+        "DEFAULT" => "🟢".to_string(),
+        "DND" => "🔴".to_string(),
+        _ => "⚫".to_string(),
+    };
 
     embed = embed.field(t!("commands.wov.player.search.online_status", locale = language),
-                        t!(format!("commands.wov.player.search.online_status.{}", player.status), locale = language), true);
+                        format!("{} **{}**", status_emoji, t!(format!("commands.wov.player.search.online_status.{}", player.status), locale = language)), true);
 
     let last_online = DateTime::parse_from_rfc3339(&player.last_online.unwrap()).unwrap();
     let last_online = match Utc::now() - last_online.with_timezone(&Utc) < TimeDelta::minutes(7) {
-        true => format!("{}", t!("commands.wov.player.search.last_online.just_now")),
+        true => format!("{}", t!("commands.wov.player.search.last_online.just_now", locale = language)),
         false => get_relative_timestamp(&last_online.timestamp())
     };
     
@@ -122,15 +129,14 @@ pub async fn search(ctx: Context<'_>, username: String) -> Result<(), Error> {
     embed = embed.field(t!("commands.wov.player.search.created_on", locale = language), created_at, true);
 
     let roses_sent = match player.sent_roses_count {
-        Some(-1) => format!("{}", t!("commands.wov.player.search.private", locale = language)),
+        Some(-1) | None => "?".to_string(),
         Some(roses_sent) => roses_sent.to_string(),
-        None => "?".to_string()
+
     };
 
     let roses_received = match player.received_roses_count {
-        Some(-1) => format!("{}", t!("commands.wov.player.search.private", locale = language)),
+        Some(-1) | None => "?".to_string(),
         Some(roses_received) => roses_received.to_string(),
-        None => "?".to_string()
     };
 
     let rose_difference = match player.received_roses_count {
@@ -143,7 +149,7 @@ pub async fn search(ctx: Context<'_>, username: String) -> Result<(), Error> {
         t!("commands.wov.player.search.roses.value",
             roses_sent = roses_sent,
             roses_received = roses_received,
-            rose_emoji = ctx.data().custom_emojis.get(CustomEmoji::SINGLE_ROSE).unwrap().to_string(),
+            rose_emoji = data.custom_emojis.get(CustomEmoji::SINGLE_ROSE).unwrap().to_string(),
             rose_difference = rose_difference,
             locale = language),
         true
@@ -159,9 +165,9 @@ pub async fn search(ctx: Context<'_>, username: String) -> Result<(), Error> {
     let ranked_season_played_count = player.ranked_season_played_count.unwrap_or(-1);
 
     if ranked_season_played_count == -1 {
-        embed = embed.field(t!("commands.wov.player.search.ranked_season", locale = language), t!("commands.wov.player.search.ranked_season.private", locale = language), true);
+        embed = embed.field(t!("commands.wov.player.search.ranked_stats", locale = language), t!("commands.wov.player.search.ranked_stats.private", locale = language), true);
     } else if ranked_season_played_count == 0 {
-        embed = embed.field(t!("commands.wov.player.search.ranked_season", locale = language), t!("commands.wov.player.search.ranked_season.no_games", locale = language), true);
+        embed = embed.field(t!("commands.wov.player.search.ranked_stats", locale = language), t!("commands.wov.player.search.ranked_stats.no_games", locale = language), true);
     } else {
         // No games played so skill resets to 1500 (data is not private)
         let ranked_season_skill = match player.ranked_season_skill.unwrap_or(-1) {
@@ -172,8 +178,8 @@ pub async fn search(ctx: Context<'_>, username: String) -> Result<(), Error> {
         let ranked_season_best_rank = player.ranked_season_best_rank.unwrap_or(-1);
 
         embed = embed.field(
-            t!("commands.wov.player.search.ranked_season", locale = language),
-            t!("commands.wov.player.search.ranked_season.value",
+            t!("commands.wov.player.search.ranked_stats", locale = language),
+            t!("commands.wov.player.search.ranked_stats.value",
                 skill = ranked_season_skill,
                 max_skill = ranked_season_max_skill,
                 best_rank = ranked_season_best_rank,

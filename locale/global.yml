@@ -70,8 +70,8 @@ commands:
     player:
       search:
         private:
-          en: Hidden
-          uk: Скрито
+          en: "*hidden*"
+          uk: "*приховано*"
         no_input:
           en: "No username provided.\n\nCorrect syntax: `wolvesville player search <username>`"
           uk: "Не вказано ім'я користувача.\n\nПравильний синтаксис: `wolvesville player search <ім'я_користувача>`"
@@ -88,18 +88,18 @@ commands:
             en: August 3, 2018 or before
             uk: 3-го серпня, 2018 або раніше
           private:
-            en: "*Date is private*"
-            uk: "*Дату скрито*"
+            en: "*Date is hidden*"
+            uk: "*Дату приховано*"
         description:
           no_previous_username:
             en: "Information I could gather about %{username} on Wolvesville"
             uk: "Інформація, яку я зміг зібрати про %{username} на Wolvesville"
           has_previous_username:
-            en: "Information I could gather about %{username} (*also was known as* `%{previous_username}`) on Wolvesville"
-            uk: "Інформація, яку я зміг зібрати про %{username} (*також відомого як* `%{previous_username}`) на Wolvesville"
+            en: "Information I could gather about user %{username} (*also was known as* `%{previous_username}`*) on Wolvesville"
+            uk: "Інформація, яку я зміг зібрати про користувача %{username} (*також відомого як* `%{previous_username}`*) на Wolvesville"
         last_online:
           en: "Last online"
-          uk: "Востаннє був онлайн"
+          uk: "Востаннє був/була онлайн"
           just_now:
             en: Just now
             uk: Щойно
@@ -107,20 +107,20 @@ commands:
           en: Level
           uk: Рівень
         online_status:
-          en: Online status
-          uk: Статус онлайну
+          en: Status
+          uk: Статус
           PLAY:
-            en: Let's play!
-            uk: Граємо!
+            en: Looking for a game
+            uk: Шукає гру
           DEFAULT:
-            en: Online
-            uk: Онлайн
+            en: Appears online
+            uk: З'являється онлайн
           DND:
             en: Do not disturb
             uk: Не турбувати
           OFFLINE:
-            en: Offline
-            uk: Офлайн
+            en: Invisible
+            uk: Невидимий
         personal_message:
           en: Personal message
           uk: Особисте повідомлення
@@ -141,19 +141,19 @@ commands:
           uk: Командна статистика
           value:
             en: "Village: **%{village_wins}** Wins/**%{village_losses}** Defeats  **(%{village_wr}% wr)**\nWerewolves: **%{werewolf_wins}** Wins/**%{werewolf_losses}** Defeats  **(%{werewolf_wr}% wr)**\nSolo voting: **%{voting_wins}** Wins/**%{voting_losses}** Defeats  **(%{voting_wr}% wr)**\nSolo killer: **%{solo_wins}** Wins/**%{solo_losses}** Defeats  **(%{solo_wr}% wr)**"
-            uk: "Селяни: **%{village_wins}** Перемог/**%{village_losses}** Поразок  **(%{village_wr}% wr)**\nПеревертні: **%{werewolf_wins}** Перемог/**%{werewolf_losses}** Поразок  **(%{werewolf_wr}% wr)**\nОдиночне голосування: **%{voting_wins}** Перемог/**%{voting_losses}** Поразок  **(%{voting_wr}% wr)**\nОдиночний вбивця: **%{solo_wins}** Перемог/**%{solo_losses}** Поразок  **(%{solo_wr}% wr)**"
-        ranked_season:
-          en:
-          uk:
+            uk: "Селяни: **%{village_wins}** Перемог/**%{village_losses}** Поразок  **(%{village_wr}% wr)**\nПеревертні: **%{werewolf_wins}** Перемог/**%{werewolf_losses}** Поразок  **(%{werewolf_wr}% wr)**\nРолі голосування: **%{voting_wins}** Перемог/**%{voting_losses}** Поразок  **(%{voting_wr}% wr)**\nВбивця: **%{solo_wins}** Перемог/**%{solo_losses}** Поразок  **(%{solo_wr}% wr)**"
+        ranked_stats:
+          en: Ranked stats
+          uk: Рейтингова статистика
           value:
-            en:
-            uk:
+            en: "Current sp: **%{skill}**\nOverall best sp: **%{max_skill}**\nHighest season final rank **%{best_rank}**\nSeasons participated in: **%{seasons_played}**"
+            uk: "Поточні ом: **%{skill}**\nРекорд ом **%{max_skill}**\nНайкращий ранг сезону **%{best_rank}**\nЗіграно сезонів: **%{seasons_played}**"
           private:
-            en:
-            uk:
+            en: "*ranked stats are hidden*"
+            uk: "*рейтингова статистика прихована*"
           no_games:
-            en:
-            uk:
+            en: "*No ranked games played*"
+            uk: "*Не грав в рейтингові ігри*"
         clan:
           en: Clan
           uk: Клан
@@ -162,6 +162,9 @@ commands:
           hidden:
               en: "*Clan information is hidden*"
               uk: "*Інформація про клан прихована*"
+        no_clan:
+          en: "*Not in a clan or clan information is hidden*"
+          uk: "*Не в клані або інформація про клан прихована*"
 common:
   error:
     en: Error
