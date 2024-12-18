@@ -4,6 +4,7 @@ use crate::bot::core::structs::{Context, Error, Data, CustomEmoji};
 use crate::utils::{language::get_language, apicallers::wolvesville, math::calculate_percentage};
 use logfather::{debug, error};
 use chrono::{DateTime, TimeDelta, Utc};
+use crate::db;
 use crate::utils::apicallers::save_to_file;
 use crate::utils::time::{get_long_date, get_relative_timestamp, pretty_time_delta};
 
@@ -72,7 +73,10 @@ pub async fn search(ctx: Context<'_>, username: String) -> Result<(), Error> {
 
     // debug!("{:?}", player);
     // save_to_file(&player, player.username.as_str());
-
+    db::wolvesville::player::insert_or_update_full_player(&data.db_pool, &player).await.map_err(|e| {
+        error!("An error occurred while inserting or updating the player: {:?}", e);
+        e
+    })?;
     // ~434 Bytes all private
     // ~1.2 kB all private with redundant fields
 
