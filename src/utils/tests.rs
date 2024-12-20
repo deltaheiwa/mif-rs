@@ -1,3 +1,4 @@
+#![allow(unused_imports)]
 use chrono::TimeDelta;
 use crate::utils::math::calculate_percentage;
 use crate::utils::time;

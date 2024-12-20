@@ -81,16 +81,14 @@ async fn initialize_schema(pool: &SqlitePool) -> anyhow::Result<()> {
             id TEXT PRIMARY KEY,
             username TEXT NOT NULL,
             personal_message TEXT,
-            clan_id TEXT,
             json JSON NOT NULL,
-            timestamp INTEGER NOT NULL,
-            FOREIGN KEY(clan_id) REFERENCES wolvesville_clans(id) ON DELETE SET NULL
+            timestamp INTEGER NOT NULL DEFAULT CURRENT_TIMESTAMP
         );
 
         CREATE TABLE IF NOT EXISTS wolvesville_players_previous_usernames (
             player_id TEXT NOT NULL,
             username TEXT NOT NULL,
-            timestamp INTEGER NOT NULL,
+            timestamp INTEGER NOT NULL DEFAULT CURRENT_TIMESTAMP,
             PRIMARY KEY(player_id, timestamp),
             FOREIGN KEY(player_id) REFERENCES wolvesville_players(id) ON DELETE CASCADE
         );
@@ -98,9 +96,17 @@ async fn initialize_schema(pool: &SqlitePool) -> anyhow::Result<()> {
         CREATE TABLE IF NOT EXISTS wolvesville_players_ranked_skill (
             player_id TEXT NOT NULL,
             skill INTEGER NOT NULL,
-            timestamp INTEGER NOT NULL,
+            timestamp INTEGER NOT NULL DEFAULT CURRENT_TIMESTAMP,
             PRIMARY KEY(player_id, timestamp),
             FOREIGN KEY(player_id) REFERENCES wolvesville_players(id) ON DELETE CASCADE
+        );
+
+        CREATE TABLE IF NOT EXISTS wolvesville_player_clan (
+            player_id TEXT NOT NULL,
+            clan_id TEXT NOT NULL,
+            PRIMARY KEY(player_id, clan_id),
+            FOREIGN KEY(player_id) REFERENCES wolvesville_players(id) ON DELETE CASCADE,
+            FOREIGN KEY(clan_id) REFERENCES wolvesville_clans(id) ON DELETE CASCADE
         );
     "#;
 

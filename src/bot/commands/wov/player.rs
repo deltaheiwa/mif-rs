@@ -2,7 +2,7 @@ use std::path::Path;
 use poise::serenity_prelude as serenity;
 use crate::bot::core::structs::{Context, Error, Data, CustomEmoji};
 use crate::utils::{language::get_language, apicallers::wolvesville, math::calculate_percentage};
-use logfather::{debug, error};
+use logfather::{error};
 use chrono::{DateTime, TimeDelta, Utc};
 use crate::db;
 use crate::utils::apicallers::save_to_file;
@@ -300,8 +300,6 @@ pub async fn search(ctx: Context<'_>, username: String) -> Result<(), Error> {
             embed = embed.field(t!("commands.wov.player.search.clan", locale = language), t!("commands.wov.player.search.no_clan", locale = language), false);
         }
     }
-
-
 
     ctx.send(poise::CreateReply::default().embed(embed).attachment(image)).await.unwrap();
     Ok(())
