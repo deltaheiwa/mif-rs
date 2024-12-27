@@ -2,7 +2,7 @@ use std::path::Path;
 use poise::serenity_prelude as serenity;
 use crate::bot::core::structs::{Context, Error, Data, CustomEmoji};
 use crate::utils::{language::get_language, apicallers::wolvesville, math::calculate_percentage};
-use logfather::{error};
+use logfather::{debug, error};
 use chrono::{DateTime, TimeDelta, Utc};
 use crate::db;
 use crate::utils::apicallers::save_to_file;
@@ -45,38 +45,55 @@ pub async fn search(ctx: Context<'_>, username: String) -> Result<(), Error> {
         ctx.send(poise::CreateReply::default().reply(true).embed(embed_too_short)).await.unwrap();
         return Ok(());
     }
-
-    let player = wolvesville::get_wolvesville_player_by_username(&data.wolvesville_client, &username).await;
-    let player = match player {
-        Ok(player) => player,
+    // Check local database for player by searching for username and previous usernames
+    let player = match db::wolvesville::player::get_player_by_username(&data.db_pool, &username).await {
+        Ok(db_player) => { db_player } // If player is found in the database, return it
         Err(e) => {
-            error!("An error occurred while running the `wolvesville player search` command: {:?}", e);
-            let embed_error = serenity::CreateEmbed::default()
-                .title(t!("common.error", locale = language))
-                .description(t!("common.api_error", locale = language))
-                .color(serenity::Color::RED);
-            ctx.send(poise::CreateReply::default().reply(true).embed(embed_error)).await.unwrap();
-            return Ok(());
-        }
-    };
-    let player = match player {
-        Some(player) => player,
-        None => {
-            let embed_not_found = serenity::CreateEmbed::default()
-                .title(t!("common.error", locale = language))
-                .description(t!("commands.wov.player.search.not_found", username = username, locale = language))
-                .color(serenity::Color::RED);
-            ctx.send(poise::CreateReply::default().reply(true).embed(embed_not_found)).await.unwrap();
-            return Ok(());
+            // Otherwise, query the API
+            debug!("Player not found in the database, querying the API");
+            error!("{}", &e);
+            match wolvesville::get_wolvesville_player_by_username(&data.wolvesville_client, &username).await {
+                // If the API call is successful, unpack the player
+                Ok(api_player) => match api_player {
+                    // If the player is found, save to db and return it
+                    Some(unpacked) => {
+                        db::wolvesville::player::insert_or_update_full_player(&data.db_pool, &unpacked).await.map_err(|e| {
+                        error!("An error occurred while inserting or updating the player: {:?}", e); e})?;
+                        unpacked
+                    },
+                    // If the player is not found, look for the player by previous username
+                    None => {
+                        match db::wolvesville::player::get_player_by_previous_username(&data.db_pool, &username).await {
+                            Ok(db_player) => { db_player },
+                            Err(e) => {
+                                error!("{}",e);
+                                let embed_not_found = serenity::CreateEmbed::default()
+                                    .title(t!("common.error", locale = language))
+                                    .description(t!("commands.wov.player.search.not_found", username = username, locale = language))
+                                    .color(serenity::Color::RED);
+                                ctx.send(poise::CreateReply::default().reply(true).embed(embed_not_found)).await.unwrap();
+                                return Ok(());
+                            }
+                        }
+                    }
+                },
+                // If API is down or any other network error occurs, return an error message
+                Err(e) => {
+                    error!("An error occurred while running the `wolvesville player search` command: {:?}", e);
+                    let embed_error = serenity::CreateEmbed::default()
+                        .title(t!("common.error", locale = language))
+                        .description(t!("common.api_error", locale = language))
+                        .color(serenity::Color::RED);
+                    ctx.send(poise::CreateReply::default().reply(true).embed(embed_error)).await.unwrap();
+                    return Ok(());
+                }
+            }
         }
     };
 
     // debug!("{:?}", player);
     // save_to_file(&player, player.username.as_str());
-    db::wolvesville::player::insert_or_update_full_player(&data.db_pool, &player).await.map_err(|e| {
-        error!("An error occurred while inserting or updating the player: {:?}", e);
-        e
-    })?;
+
     // ~434 Bytes all private
     // ~1.2 kB all private with redundant fields
 

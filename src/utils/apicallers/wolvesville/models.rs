@@ -82,12 +82,6 @@ pub struct RoleCards {
 }
 
 #[derive(Serialize, Deserialize, Debug)]
-pub struct PreviousUsername {
-	pub username: String,
-	pub timestamp: DateTime<Utc>
-}
-
-#[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct WolvesvillePlayer {
 	pub avatars: Option<Vec<Avatar>>,
