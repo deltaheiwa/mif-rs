@@ -4,12 +4,12 @@ use logfather::{debug, info};
 use sqlx::sqlite::SqliteRow;
 use crate::utils::apicallers::wolvesville::models::WolvesvillePlayer;
 
-fn pack_player(row: &SqliteRow, p: &mut WolvesvillePlayer, previous_username: Option<String>) {
+fn pack_player(timestamp: NaiveDateTime, p: &mut WolvesvillePlayer, previous_username: Option<String>) {
     p.previous_username = previous_username;
-    p.timestamp = DateTime::from_timestamp(row.try_get::<i64, &str>("timestamp").unwrap_or(DateTime::<Utc>::default().timestamp()), 0);
+    p.timestamp = Some(DateTime::from_naive_utc_and_offset(timestamp, Utc));
 }
 
-pub async fn get_player_by_id(pool: &SqlitePool, player_id: &str) -> anyhow::Result<WolvesvillePlayer> {
+pub async fn get_player_by_id(pool: &SqlitePool, player_id: &str) -> anyhow::Result<Option<WolvesvillePlayer>> {
     let q = r#"
         SELECT * FROM wolvesville_players
         WHERE player_id = $1;
@@ -22,18 +22,25 @@ pub async fn get_player_by_id(pool: &SqlitePool, player_id: &str) -> anyhow::Res
         LIMIT 1 OFFSET 1;
     "#;
 
-    let row = query(q).bind(player_id).fetch_one(pool).await?;
-    let pu_row = query(pq).bind(player_id).fetch_one(pool).await?;
+    let row = query(q).bind(player_id).fetch_optional(pool).await?;
+    let pu_row = query(pq).bind(player_id).fetch_optional(pool).await?;
+
+    if row.is_none() {
+        return Ok(None);
+    }
+
+    let row = row.unwrap();
+    let pu_row = pu_row.unwrap();
 
     let mut deserialized_json = serde_json::from_value::<WolvesvillePlayer>(row.get("json"))
         .map_err(|err| anyhow::anyhow!("Failed to deserialize player: {}", err))?;
 
-    pack_player(&row, &mut deserialized_json, pu_row.get("previous_username"));
+    pack_player(row.get::<NaiveDateTime, _>("timestamp"), &mut deserialized_json, pu_row.get("previous_username"));
 
-    Ok(deserialized_json)
+    Ok(Some(deserialized_json))
 }
 
-pub async fn get_player_by_username(pool: &SqlitePool, username: &str) -> anyhow::Result<WolvesvillePlayer> {
+pub async fn get_player_by_username(pool: &SqlitePool, username: &str) -> anyhow::Result<Option<WolvesvillePlayer>> {
     let q = r#"
         SELECT wp.* FROM wolvesville_player_usernames wpu
         JOIN wolvesville_players wp ON wp.id = wpu.player_id
@@ -45,7 +52,13 @@ pub async fn get_player_by_username(pool: &SqlitePool, username: &str) -> anyhow
         LIMIT 1;
     "#;
 
-    let row = query(q).bind(username).fetch_one(pool).await?;
+    let row = query(q).bind(username).fetch_optional(pool).await?;
+
+    if row.is_none() {
+        return Ok(None);
+    }
+
+    let row = row.unwrap();
 
     let mut deserialized_json = serde_json::from_value::<WolvesvillePlayer>(row.get("json"))
         .map_err(|err| anyhow::anyhow!("Failed to deserialize player: {}", err))?;
@@ -64,12 +77,12 @@ pub async fn get_player_by_username(pool: &SqlitePool, username: &str) -> anyhow
 
     let pu_row = query(previous_username_q).bind(&deserialized_json.id).fetch_optional(pool).await?;
 
-    pack_player(&row, &mut deserialized_json, pu_row.map(|r| r.get("previous_username")));
+    pack_player(row.get::<NaiveDateTime, _>("timestamp"), &mut deserialized_json, pu_row.map(|r| r.get("previous_username")));
 
-    Ok(deserialized_json)
+    Ok(Some(deserialized_json))
 }
 
-pub async fn get_player_by_previous_username(pool: &SqlitePool, previous_username: &str) -> anyhow::Result<WolvesvillePlayer> {
+pub async fn get_player_by_previous_username(pool: &SqlitePool, previous_username: &str) -> anyhow::Result<Option<WolvesvillePlayer>> {
     let q = r#"
         SELECT wp.* FROM wolvesville_player_usernames wpu
         JOIN wolvesville_players wp ON wp.id = wpu.player_id
@@ -78,15 +91,21 @@ pub async fn get_player_by_previous_username(pool: &SqlitePool, previous_usernam
         LIMIT 1;
     "#;
 
-    let row = query(q).bind(previous_username).fetch_one(pool).await?;
+    let row = query(q).bind(previous_username).fetch_optional(pool).await?;
+
+    if row.is_none() {
+        return Ok(None);
+    }
+
+    let row = row.unwrap();
 
     let mut deserialized_json = serde_json::from_value::<WolvesvillePlayer>(row.get("json"))
         .map_err(|err| anyhow::anyhow!("Failed to deserialize player: {}", err))?;
     debug!("Got player by previous username: {}", previous_username);
 
-    pack_player(&row, &mut deserialized_json, Some(previous_username.to_string()));
+    pack_player(row.get::<NaiveDateTime, _>("timestamp"), &mut deserialized_json, Some(previous_username.to_string()));
 
-    Ok(deserialized_json)
+    Ok(Some(deserialized_json))
 }
 
 pub async fn insert_or_update_full_player(pool: &SqlitePool, player: &WolvesvillePlayer) -> anyhow::Result<()> {
