@@ -1,12 +1,18 @@
+use std::io::Cursor;
 use std::path::Path;
 use poise::serenity_prelude as serenity;
 use crate::bot::core::structs::{Context, Error, Data, CustomEmoji};
-use crate::utils::{language::get_language, apicallers::wolvesville, math::calculate_percentage};
+use crate::utils::{language::get_language, apicallers::wolvesville, math::calculate_percentage, image::wolvesville as wov_image};
 use logfather::{debug, error};
 use chrono::{DateTime, TimeDelta, Utc};
+use tokio::fs::File;
 use crate::db;
-use crate::utils::apicallers::save_to_file;
+use crate::utils::apicallers::wolvesville::models::WolvesvillePlayer;
 use crate::utils::time::{get_long_date, get_relative_timestamp, pretty_time_delta};
+
+#[allow(unused_imports)]
+use crate::utils::apicallers::save_to_file;
+
 
 async fn on_missing_username_input(error: poise::FrameworkError<'_, Data, Error>) {
     match error {
@@ -45,28 +51,30 @@ pub async fn search(ctx: Context<'_>, username: String) -> Result<(), Error> {
         ctx.send(poise::CreateReply::default().reply(true).embed(embed_too_short)).await.unwrap();
         return Ok(());
     }
+    debug!("Searching for player: {}", username);
     // Check local database for player by searching for username and previous usernames
-    let player = match db::wolvesville::player::get_player_by_username(&data.db_pool, &username).await {
-        Ok(db_player) => { db_player } // If player is found in the database, return it
-        Err(e) => {
+    let player = match db::wolvesville::player::get_player_by_username(&data.db_pool, &username).await.or_else(|e| { error!("{}", e); Ok::<Option<WolvesvillePlayer>, anyhow::Error>(None) }).and_then(|player| Ok(player)) {
+        Ok(Some(db_player)) => { db_player } // If player is found in the database, return it
+        _ => {
             // Otherwise, query the API
             debug!("Player not found in the database, querying the API");
-            error!("{}", &e);
             match wolvesville::get_wolvesville_player_by_username(&data.wolvesville_client, &username).await {
                 // If the API call is successful, unpack the player
                 Ok(api_player) => match api_player {
                     // If the player is found, save to db and return it
                     Some(unpacked) => {
+                        debug!("Player found in the API, saving to the database");
                         db::wolvesville::player::insert_or_update_full_player(&data.db_pool, &unpacked).await.map_err(|e| {
                         error!("An error occurred while inserting or updating the player: {:?}", e); e})?;
                         unpacked
                     },
                     // If the player is not found, look for the player by previous username
                     None => {
-                        match db::wolvesville::player::get_player_by_previous_username(&data.db_pool, &username).await {
-                            Ok(db_player) => { db_player },
-                            Err(e) => {
-                                error!("{}",e);
+                        debug!("Player not found in the API, looking for the player by previous username");
+                        match db::wolvesville::player::get_player_by_previous_username(&data.db_pool, &username).await.or_else(|e| { error!("{}", e); Ok::<Option<WolvesvillePlayer>, anyhow::Error>(None) }).and_then(|player| Ok(player)) {
+                            Ok(Some(db_player)) => { db_player },
+                            _ => {
+                                debug!("Player not found by previous username in the database, returning an error message");
                                 let embed_not_found = serenity::CreateEmbed::default()
                                     .title(t!("common.error", locale = language))
                                     .description(t!("commands.wov.player.search.not_found", username = username, locale = language))
@@ -91,6 +99,30 @@ pub async fn search(ctx: Context<'_>, username: String) -> Result<(), Error> {
         }
     };
 
+    let player = match player.is_outdated() {
+        true => {
+            debug!("Player outdated, queried the API for updated information");
+            match wolvesville::get_wolvesville_player_by_id(&data.wolvesville_client, &player.id).await {
+                Ok(api_player) => match api_player {
+                    Some(unpacked) => {
+                        db::wolvesville::player::insert_or_update_full_player(&data.db_pool, &unpacked).await.map_err(|e| {
+                            error!("An error occurred while inserting or updating the player: {:?}", e);
+                            e
+                        })?;
+                        unpacked
+                    },
+                    None => player
+                },
+                Err(e) => {
+                    error!("An error occurred while updating outdated information in the `wolvesville player search` command at request for the player by username: {:?}", e);
+                    player
+                }
+            }
+        },
+        false => player
+    };
+
+
     // debug!("{:?}", player);
     // save_to_file(&player, player.username.as_str());
 
@@ -99,15 +131,22 @@ pub async fn search(ctx: Context<'_>, username: String) -> Result<(), Error> {
 
     // Converting a string with hex code of the color to u32. If it fails, it will be black (0)
     let color = u32::from_str_radix(player.profile_icon_color.trim_start_matches("#"), 16).unwrap_or(0);
-
-    let image = serenity::CreateAttachment::path(Path::new("res/images/wov_logo.png")).await.expect("Couldn't find wov_logo.png in res/images");
+    let avatar_thumbnail = match player.equipped_avatar {
+        Some(avatar) => {
+            let rendered_avatar = wov_image::render_wolvesville_avatar(avatar).await?;
+            let mut buf = Vec::new();
+            rendered_avatar.write_to(&mut Cursor::new(&mut buf), image::ImageFormat::Png).expect("Failed to convert image to bytes");
+            serenity::CreateAttachment::bytes(buf, "avatar.png")
+        },
+        None => serenity::CreateAttachment::file(&File::open(Path::new("res/images/wov_logo.png")).await.expect("Couldn't find wov_logo.png in res/images"), "avatar.png").await?
+    };
 
     let mut embed = serenity::CreateEmbed::default()
         .title(format!("{}", player.username))
         .description(if player.previous_username.is_none() {t!("commands.wov.player.search.description.no_previous_username", username=player.username, locale = language)}
             else {t!("commands.wov.player.search.description.has_previous_username", username=player.username, previous_username=player.previous_username.unwrap(), locale = language)})
         .color(serenity::Color::new(color))
-        .thumbnail("attachment://wov_logo.png"); // Temporary solution until I manage to render player's equipped avatar
+        .thumbnail("attachment://avatar.png");
 
     embed = match player.personal_message {
         Some(pm) => if !pm.is_empty() { embed } else { embed.field(t!("commands.wov.player.search.personal_message", locale = language), pm, false) },
@@ -318,6 +357,6 @@ pub async fn search(ctx: Context<'_>, username: String) -> Result<(), Error> {
         }
     }
 
-    ctx.send(poise::CreateReply::default().embed(embed).attachment(image)).await.unwrap();
+    ctx.send(poise::CreateReply::default().attachment(avatar_thumbnail).embed(embed)).await.unwrap();
     Ok(())
 }

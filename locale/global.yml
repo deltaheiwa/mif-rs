@@ -92,8 +92,8 @@ commands:
             uk: "*Дату приховано*"
         description:
           no_previous_username:
-            en: "Information I could gather about %{username} on Wolvesville"
-            uk: "Інформація, яку я зміг зібрати про %{username} на Wolvesville"
+            en: "Information I could gather about `%{username}` on Wolvesville"
+            uk: "Інформація, яку я зміг зібрати про `%{username}` на Wolvesville"
           has_previous_username:
             en: "Information I could gather about user `%{username}` *(also was known as `%{previous_username}`)* on Wolvesville"
             uk: "Інформація яку я зміг зібрати про користувача `%{username}` *(також відомого як `%{previous_username}`)* на Wolvesville"
