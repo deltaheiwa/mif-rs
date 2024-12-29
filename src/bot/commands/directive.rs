@@ -5,7 +5,7 @@ use crate::bot::core::structs::{Context, Error, CustomColor};
 use crate::utils::language::get_language;
 use crate::db::users::{add_user, hit_user, set_language_code};
 use logfather::error;
-
+use serenity::all::CreateSelectMenuKind;
 
 async fn show_common(ctx: Context<'_>) -> Result<(), Error> {
     if !(hit_user(&ctx.data().db_pool, &ctx.author().id.to_string()).await?) { 
@@ -41,7 +41,8 @@ async fn show_common(ctx: Context<'_>) -> Result<(), Error> {
         ]
     );
 
-    ctx.send(poise::CreateReply::default().embed(embed).components(vec![buttons])).await?;
+    // Removed view as not needed. Button code is currently redundant, but will come in handy when adding more preferences
+    ctx.send(poise::CreateReply::default().embed(embed)).await?;
 
     while let Some(press) = serenity::collector::ComponentInteractionCollector::new(ctx)
         .filter(move |press| press.data.custom_id.starts_with(&ctx_id.to_string()))
@@ -50,8 +51,15 @@ async fn show_common(ctx: Context<'_>) -> Result<(), Error> {
     {
         let modal_id: String = format!("{}modal", ctx_id);
 
+        // Left for future reference
         let modal = serenity::CreateModal::new(&modal_id, "Preferences")
-            .components(vec![]);
+            .components(vec![
+                serenity::CreateActionRow::InputText(
+                    serenity::CreateInputText::new(serenity::InputTextStyle::Short, "Language", format!("{}c1", modal_id))
+                        .placeholder("Enter a language code")
+                        .required(true)
+                )
+            ]);
 
         press.create_response(
             &ctx.serenity_context(), 
