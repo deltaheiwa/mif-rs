@@ -167,3 +167,13 @@ pub struct WolvesvilleClan {
 
 	pub xp: i32,
 }
+
+impl WolvesvillePlayer {
+	pub fn is_outdated(&self) -> bool {
+		if let Some(timestamp) = self.timestamp {
+			let now = Utc::now();
+			let diff = now.signed_duration_since(timestamp);
+			diff.num_days() > 30
+		} else { false }
+	}
+}
