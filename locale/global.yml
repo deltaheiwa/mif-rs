@@ -165,6 +165,13 @@ commands:
         no_clan:
           en: "*Not in a clan or clan information is hidden*"
           uk: "*Не в клані або інформація про клан прихована*"
+        buttons:
+          avatars:
+            en: Avatars
+            uk: Аватари
+          sp_graph:
+            en: SP graph
+            uk: Крива ОМ
 common:
   error:
     en: Error

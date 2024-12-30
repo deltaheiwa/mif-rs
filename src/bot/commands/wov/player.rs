@@ -133,7 +133,7 @@ pub async fn search(ctx: Context<'_>, username: String) -> Result<(), Error> {
     let color = u32::from_str_radix(player.profile_icon_color.trim_start_matches("#"), 16).unwrap_or(0);
     let avatar_thumbnail = match player.equipped_avatar {
         Some(avatar) => {
-            let rendered_avatar = wov_image::render_wolvesville_avatar(avatar).await?;
+            let rendered_avatar = wov_image::render_wolvesville_avatar(avatar, player.level).await?;
             let mut buf = Vec::new();
             rendered_avatar.write_to(&mut Cursor::new(&mut buf), image::ImageFormat::Png).expect("Failed to convert image to bytes");
             serenity::CreateAttachment::bytes(buf, "avatar.png")
@@ -146,7 +146,8 @@ pub async fn search(ctx: Context<'_>, username: String) -> Result<(), Error> {
         .description(if player.previous_username.is_none() {t!("commands.wov.player.search.description.no_previous_username", username=player.username, locale = language)}
             else {t!("commands.wov.player.search.description.has_previous_username", username=player.username, previous_username=player.previous_username.unwrap(), locale = language)})
         .color(serenity::Color::new(color))
-        .thumbnail("attachment://avatar.png");
+        .thumbnail("attachment://avatar.png")
+        .timestamp(if let Some(timestamp) = player.timestamp {timestamp} else {Utc::now()});
 
     embed = match player.personal_message {
         Some(pm) => if !pm.is_empty() { embed } else { embed.field(t!("commands.wov.player.search.personal_message", locale = language), pm, false) },
@@ -357,6 +358,20 @@ pub async fn search(ctx: Context<'_>, username: String) -> Result<(), Error> {
         }
     }
 
-    ctx.send(poise::CreateReply::default().attachment(avatar_thumbnail).embed(embed)).await.unwrap();
+    let button_components = serenity::CreateActionRow::Buttons(
+        vec![
+            serenity::CreateButton::new(format!("{}.avatars", ctx.id()))
+                .label(t!("commands.wov.player.search.buttons.avatars", locale = language))
+                .style(serenity::ButtonStyle::Primary),
+            serenity::CreateButton::new(format!("{}.sp_graph", ctx.id()))
+                .label(t!("commands.wov.player.search.buttons.sp_graph", locale = language))
+                .style(serenity::ButtonStyle::Primary),
+            serenity::CreateButton::new(format!("{}.refresh", ctx.id()))
+                .emoji(serenity::ReactionType::Unicode("🔄".to_string()))
+                .style(serenity::ButtonStyle::Secondary)
+        ]
+    );
+
+    ctx.send(poise::CreateReply::default().attachment(avatar_thumbnail).embed(embed).components(vec![button_components])).await.unwrap();
     Ok(())
 }

@@ -1,7 +1,7 @@
 use poise::{serenity_prelude as serenity, CreateReply};
 use ::serenity::async_trait;
-use logfather::{warn, error};
-
+use logfather::{warn, info, error};
+use serenity::all::{Context, ResumedEvent};
 use crate::bot::core::structs::{Data, Error};
 
 mod guild_events;
@@ -24,6 +24,10 @@ impl serenity::EventHandler for Handler {
 
     async fn ready(&self, ctx: serenity::Context, ready: serenity::Ready) {
         ready::on_ready(ctx, ready).await;
+    }
+
+    async fn resume(&self, _ctx: Context, _event: ResumedEvent) {
+        info!("Resumed");
     }
 }
 

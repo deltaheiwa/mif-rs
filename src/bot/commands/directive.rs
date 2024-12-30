@@ -5,7 +5,6 @@ use crate::bot::core::structs::{Context, Error, CustomColor};
 use crate::utils::language::get_language;
 use crate::db::users::{add_user, hit_user, set_language_code};
 use logfather::error;
-use serenity::all::CreateSelectMenuKind;
 
 async fn show_common(ctx: Context<'_>) -> Result<(), Error> {
     if !(hit_user(&ctx.data().db_pool, &ctx.author().id.to_string()).await?) { 
@@ -33,9 +32,9 @@ async fn show_common(ctx: Context<'_>) -> Result<(), Error> {
     );
     
     let ctx_id: u64 = ctx.id();
-    let preferences_button_id: String = format!("{}pref", ctx_id);
+    let preferences_button_id: String = format!("{}.pref", ctx_id);
 
-    let buttons = serenity::CreateActionRow::Buttons(
+    let _buttons = serenity::CreateActionRow::Buttons(
         vec![
             serenity::CreateButton::new(&preferences_button_id).label("Change preferences")
         ]

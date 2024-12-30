@@ -1,7 +1,6 @@
 use chrono::{DateTime, NaiveDateTime, Utc};
 use sqlx::{query, Row, Sqlite, SqlitePool, Transaction};
 use logfather::{debug, info};
-use sqlx::sqlite::SqliteRow;
 use crate::utils::apicallers::wolvesville::models::WolvesvillePlayer;
 
 fn pack_player(timestamp: NaiveDateTime, p: &mut WolvesvillePlayer, previous_username: Option<String>) {
