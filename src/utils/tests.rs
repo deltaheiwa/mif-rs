@@ -1,6 +1,6 @@
 #![allow(unused_imports)]
 use chrono::TimeDelta;
-use crate::utils::math::calculate_percentage;
+use crate::utils::math::{calculate_percentage, determine_level_rank};
 use crate::utils::time;
 
 #[test]
@@ -31,4 +31,19 @@ fn test_pretty_time_delta() {
     assert_eq!(time::pretty_time_delta(&TimeDelta::hours(24)), "1 day");
     assert_eq!(time::pretty_time_delta(&TimeDelta::hours(25)), "1 day, 1 hour");
     assert_eq!(time::pretty_time_delta(&TimeDelta::hours(26)), "1 day, 2 hours");
+}
+
+#[test]
+fn test_level_rank() {
+    assert_eq!(determine_level_rank(-1), 0);
+    assert_eq!(determine_level_rank(0), 1);
+    assert_eq!(determine_level_rank(9), 1);
+    assert_eq!(determine_level_rank(10), 2);
+    assert_eq!(determine_level_rank(19), 2);
+    assert_eq!(determine_level_rank(419), 42);
+    assert_eq!(determine_level_rank(420), 43);
+    assert_eq!(determine_level_rank(499), 43);
+    assert_eq!(determine_level_rank(500), 44);
+    assert_eq!(determine_level_rank(999), 48);
+    assert_eq!(determine_level_rank(1000), 49);
 }

@@ -1,7 +1,7 @@
 pub mod wolvesville;
 
 use reqwest::get;
-use image::{load_from_memory, DynamicImage, GenericImage, GenericImageView, Pixel};
+use image::{load_from_memory, DynamicImage, Pixel};
 
 
 pub async fn get_image_by_url(url: &str) -> anyhow::Result<DynamicImage> {
