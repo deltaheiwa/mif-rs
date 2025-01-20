@@ -364,20 +364,7 @@ pub async fn search(ctx: Context<'_>, username: String) -> Result<(), Error> {
         }
     }
 
-    let button_components = serenity::CreateActionRow::Buttons(
-        vec![
-            serenity::CreateButton::new(format!("{}.avatars", ctx.id()))
-                .label(t!("commands.wov.player.search.buttons.avatars", locale = language))
-                .style(serenity::ButtonStyle::Primary)
-                .disabled(player.avatars.is_none()),
-            serenity::CreateButton::new(format!("{}.sp_graph", ctx.id()))
-                .label(t!("commands.wov.player.search.buttons.sp_graph", locale = language))
-                .style(serenity::ButtonStyle::Primary),
-            serenity::CreateButton::new(format!("{}.refresh", ctx.id()))
-                .emoji(serenity::ReactionType::Unicode("🔄".to_string()))
-                .style(serenity::ButtonStyle::Secondary)
-        ]
-    );
+    let button_components = get_player_search_buttons(ctx_id, false);
 
     let loading_emoji = data.custom_emojis.get(CustomEmoji::LOADING).unwrap().to_string();
 
@@ -495,11 +482,35 @@ pub async fn search(ctx: Context<'_>, username: String) -> Result<(), Error> {
                 todo!()
             },
             id if id.ends_with(".refresh") => {
-                todo!()
+                let player_log_timestamp = player.timestamp.unwrap_or(Utc::now());
+                if (Utc::now() - player_log_timestamp < TimeDelta::minutes(30)) {
+                    // Disable the button
+                    let button_components = get_player_search_buttons(ctx_id, true);
+
+                }
             },
             _ => {}
         }
     }
 
     Ok(())
+}
+
+
+fn get_player_search_buttons(ctx_id: u64, refresh_button_disabled: bool) -> serenity::CreateActionRow {
+    serenity::CreateActionRow::Buttons(
+        vec![
+            serenity::CreateButton::new(format!("{}.avatars", ctx_id))
+                .label("Avatars")
+                .style(serenity::ButtonStyle::Primary),
+            serenity::CreateButton::new(format!("{}.sp_graph", ctx_id))
+                .label("SP Graph")
+                .style(serenity::ButtonStyle::Primary),
+            serenity::CreateButton::new(format!("{}.refresh", ctx_id))
+                .emoji(serenity::ReactionType::Unicode("🔄".to_string()))
+                .style(serenity::ButtonStyle::Secondary)
+                .disabled(refresh_button_disabled)
+        ]
+    )
+
 }
