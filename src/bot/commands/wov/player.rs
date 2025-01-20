@@ -419,12 +419,17 @@ pub async fn search(ctx: Context<'_>, username: String) -> Result<(), Error> {
                     .map(|avatar| wov_image::render_wolvesville_avatar(avatar, None))
                     .collect();
 
-                // TODO: Fix the ordering
-                let avatar_images: HashMap<String, DynamicImage> = futures::future::join_all(gathered_futures).await
+                let avatar_images_mapped: HashMap<String, DynamicImage> = futures::future::join_all(gathered_futures).await
                     .into_iter().filter_map(|image| image.ok()).map(|image| (image.0, image.1)).collect();
                 let all_avatars_image: DynamicImage = wov_image::render_all_wolvesville_avatars(
-                    &ordered_avatars.iter().map(|avatar| avatar.url.clone()).collect(), &avatar_images).await?;
-                let mut avatar_images: VecDeque<DynamicImage> = avatar_images.into_iter().map(|avatar_image| avatar_image.1).collect();
+                    &ordered_avatars.iter().map(|avatar| avatar.url.clone()).collect(), &avatar_images_mapped).await?;
+
+                // Fix the ordering according to ordered_avatars
+                let mut avatar_images: VecDeque<DynamicImage> = VecDeque::new();
+                for avatar in ordered_avatars.iter() {
+                    avatar_images.push_back(avatar_images_mapped.get(&avatar.url).unwrap().clone());
+                }
+
                 avatar_images.push_front(all_avatars_image);
 
                 let mut current_page = 0;
