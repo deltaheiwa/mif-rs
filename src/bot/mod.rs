@@ -12,6 +12,7 @@ use logfather::error;
 use crate::{db::{get_pool, prefixes::get_prefix}, utils::apicallers::wolvesville};
 use core::structs::{Data, Error, PartialContext};
 use commands::*;
+use crate::bot::core::structs::Context;
 
 
 const DEFAULT_PREFIX: &str = "m.";

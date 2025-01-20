@@ -45,7 +45,7 @@ async fn show_common(ctx: Context<'_>) -> Result<(), Error> {
 
     while let Some(press) = serenity::collector::ComponentInteractionCollector::new(ctx)
         .filter(move |press| press.data.custom_id.starts_with(&ctx_id.to_string()))
-        .timeout(std::time::Duration::from_secs(60 * 10)) // Timeout after 10 minutes
+        .timeout(std::time::Duration::from_secs(600)) // Timeout after 10 minutes
         .await
     {
         let modal_id: String = format!("{}modal", ctx_id);

@@ -79,7 +79,7 @@ commands:
           en: "Username `%{username}` is too short.\n\nPlease provide a username with at least 3 characters"
           uk: "Ім'я користувача `%{username}` занадто коротке.\n\nБудь ласка, вкажіть ім'я користувача, яке містить принаймні 3 символи"
         not_found:
-          en: "Couldn't find any user with that username. *Maybe they changed it?*"
+          en: "Couldn't find any user with that username. *Maybe they've changed it?*"
           uk: "Не вдалося знайти жодного користувача з таким ім'ям. *Можливо, вони його змінили?*"
         created_on:
           en: Created on
@@ -172,6 +172,19 @@ commands:
           sp_graph:
             en: SP graph
             uk: Крива ОМ
+        avatars:
+          rendering:
+            en: "Rendering... %{loading_emoji}"
+            uk: "Обробка... %{loading_emoji}"
+          all_avatars:
+            en: "All avatars"
+            uk: "Усі аватари"
+          select_placeholder:
+            en: "Select an avatar"
+            uk: "Оберіть аватар"
+          select_option:
+            en: "Avatar: %{index}"
+            uk: "Аватар: %{index}"
 common:
   error:
     en: Error

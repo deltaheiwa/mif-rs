@@ -31,6 +31,7 @@ pub struct CustomEmoji;
 impl CustomEmoji {
     pub const SINGLE_ROSE: &'static str = "single_rose";
     pub const LETS_PLAY: &'static str = "lets_play";
+    pub const LOADING: &'static str = "loading";
 }
 
 pub type Error = Box<dyn std::error::Error + Send + Sync>;
