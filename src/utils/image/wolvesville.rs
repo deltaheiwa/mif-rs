@@ -58,7 +58,7 @@ pub async fn render_wolvesville_avatar(avatar: Avatar, level: Option<i32>) -> an
 
     utils::image::overlay_transparent_image(&mut solid_background, &overlay_background, 0, 0);
 
-    let mut avatar_image = utils::image::get_image_by_url(&avatar.url).await?;
+    let mut avatar_image = utils::image::get_image_by_url(avatar.url.as_str()).await?;
 
     // Crop avatar if it's too big
     if avatar_image.width() > solid_background.width() {
@@ -135,7 +135,7 @@ pub async fn render_all_wolvesville_avatars(ordered_urls: &Vec<String>, avatar_i
                 else { avatar_width / 3 * (i as u32 - (amount_of_avatars - 3)) };
         }
 
-        utils::image::overlay_transparent_image(&mut main_image, avatar_images.get(url).expect("URL mapping is wrong for some reason"), x, y);
+        utils::image::overlay_transparent_image(&mut main_image, avatar_images.get(url.as_str()).expect("URL mapping is wrong for some reason"), x, y);
     }
 
     Ok(main_image)

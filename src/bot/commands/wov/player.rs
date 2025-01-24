@@ -8,9 +8,7 @@ use crate::utils::{language::get_language, apicallers::wolvesville, math::calcul
 use logfather::{debug, info, error};
 use chrono::{DateTime, TimeDelta, Utc};
 use image::DynamicImage;
-use serenity::all::{ComponentInteraction, CreateInteractionResponse, InteractionContext, InteractionId};
 use tokio::fs::File;
-use crate::bot::commands::directive::language;
 use crate::db;
 use crate::utils::apicallers::wolvesville::models::{Avatar, WolvesvillePlayer};
 use crate::utils::time::{get_long_date, get_relative_timestamp, pretty_time_delta};
@@ -59,7 +57,7 @@ pub async fn search(ctx: Context<'_>, username: String) -> Result<(), Error> {
     }
     info!("Searching for player: {}", username);
     // Check local database for player by searching for username and previous usernames
-    let player = match db::wolvesville::player::get_player_by_username(&data.db_pool, &username).await.or_else(|e| { error!("{}", e); Ok::<Option<WolvesvillePlayer>, anyhow::Error>(None) }).and_then(|player| Ok(player)) {
+    let mut player = match db::wolvesville::player::get_player_by_username(&data.db_pool, &username).await.or_else(|e| { error!("{}", e); Ok::<Option<WolvesvillePlayer>, anyhow::Error>(None) }).and_then(|player| Ok(player)) {
         Ok(Some(db_player)) => { db_player } // If player is found in the database, return it
         _ => {
             // Otherwise, query the API
@@ -105,7 +103,7 @@ pub async fn search(ctx: Context<'_>, username: String) -> Result<(), Error> {
         }
     };
 
-    let player = match player.is_outdated() {
+    player = match player.is_outdated() {
         true => {
             debug!("Player outdated, queried the API for updated information");
             match wolvesville::get_wolvesville_player_by_id(&data.wolvesville_client, &player.id).await {
@@ -133,30 +131,244 @@ pub async fn search(ctx: Context<'_>, username: String) -> Result<(), Error> {
     // save_to_file(&player, player.username.as_str());
 
     // ~434 Bytes all private
-    // ~1.2 kB all private with redundant fields
+    // ~1.2 kB all private with redundant
 
+    let avatar_thumbnail = get_thumbnail_attachment(player.avatars.clone().unwrap().into_iter().next(), player.level).await;
+
+    let embed = construct_player_embed(data,  &mut player, avatar_thumbnail.filename.as_str()).await;
+
+    let button_components = get_player_search_buttons(ctx_id, false);
+
+    let loading_emoji = data.custom_emojis.get(CustomEmoji::LOADING).unwrap().to_string();
+
+    ctx.send(poise::CreateReply::default().attachment(avatar_thumbnail).embed(embed).components(vec![button_components])).await.unwrap();
+
+    while let Some(press) = serenity::collector::ComponentInteractionCollector::new(ctx)
+        .filter(move |press| press.data.custom_id.starts_with(ctx_id.to_string().as_str()))
+        .timeout(std::time::Duration::from_secs(600)) // Timeout after 10 minutes
+        .await
+    {
+        match press.data.custom_id.as_str() {
+            id if id.ends_with(".avatars") => {
+                let embed = serenity::CreateEmbed::default()
+                    .title(t!("commands.wov.player.search.avatars.all_avatars", locale = language))
+                    .description(t!("commands.wov.player.search.avatars.rendering",
+                            loading_emoji = loading_emoji,
+                            locale = language
+                        ))
+                    .color(CustomColor::CYAN);
+
+                press.create_response(
+                    ctx.http(),
+                    serenity::CreateInteractionResponse::Message(
+                        serenity::CreateInteractionResponseMessage::default()
+                            .embed(embed.clone())
+                    )
+                ).await.unwrap();
+
+                let ordered_avatars: Vec<Avatar> = player.avatars.clone().unwrap().into_iter().collect();
+
+                let unique_avatars: Vec<Avatar> = player.avatars.clone().unwrap()
+                    .into_iter()
+                    .collect::<HashSet<_>>() // Deduplicate the avatars
+                    .into_iter()
+                    .collect();
+
+                let gathered_futures: Vec<_> = unique_avatars
+                    .into_iter()
+                    .map(|avatar| wov_image::render_wolvesville_avatar(avatar, None))
+                    .collect();
+
+                let avatar_images_mapped: HashMap<String, DynamicImage> = futures::future::join_all(gathered_futures).await
+                    .into_iter().filter_map(|image| image.ok()).map(|image| (image.0, image.1)).collect();
+                let all_avatars_image: DynamicImage = wov_image::render_all_wolvesville_avatars(
+                    &ordered_avatars.iter().map(|avatar| avatar.url.clone()).collect(), &avatar_images_mapped).await?;
+
+                // Fix the ordering according to ordered_avatars
+                let mut avatar_images: VecDeque<DynamicImage> = VecDeque::new();
+                for avatar in ordered_avatars.iter() {
+                    avatar_images.push_back(avatar_images_mapped.get(avatar.url.as_str()).unwrap().clone());
+                }
+
+                avatar_images.push_front(all_avatars_image);
+
+                let mut current_page = 0;
+
+                let mut attachments: Vec<serenity::CreateAttachment> = Vec::new();
+                for (index, avatar_image) in avatar_images.iter().enumerate() {
+                    let mut buf = Vec::new();
+                    avatar_image.write_to(&mut Cursor::new(&mut buf), image::ImageFormat::Png).expect("Failed to convert image to bytes");
+                    attachments.push(serenity::CreateAttachment::bytes(buf, format!("avatar_{}.png", index)));
+                }
+
+                let select_menu = serenity::CreateActionRow::SelectMenu(
+                    serenity::CreateSelectMenu::new(
+                        format!("{}.avatars.select", press.id.to_string()),
+                        serenity::CreateSelectMenuKind::String {
+                            options: avatar_images.iter().enumerate().map(|(index, _)| {
+                                serenity::CreateSelectMenuOption::new(
+                                    if index != 0 { t!("commands.wov.player.search.avatars.select_option", index = index, locale = language)}
+                                    else { t!("commands.wov.player.search.avatars.all_avatars", locale = language) },
+                                    index.to_string()
+                                )
+                            }).collect()
+                        })
+                        .placeholder(t!("commands.wov.player.search.avatars.select_placeholder", locale = language))
+                );
+                press.edit_followup(
+                    ctx.http().as_ref(),
+                    press.get_response(ctx.http().as_ref()).await.unwrap().id,
+                    serenity::CreateInteractionResponseFollowup::new()
+                        .embed(embed.clone().description("").image(format!("attachment://avatar_{}.png", current_page)))
+                        .add_file(attachments.get(current_page).unwrap().clone())
+                        .components(vec![select_menu])
+                ).await?;
+
+                while let Some(select_press) = serenity::collector::ComponentInteractionCollector::new(ctx)
+                    .filter(move |select_press| select_press.data.custom_id.starts_with(&press.id.to_string()))
+                    .timeout(std::time::Duration::from_secs(600)) // Timeout after 10 minutes
+                    .await
+                {
+                    let selected_index = match &select_press.data.kind {
+                        serenity::ComponentInteractionDataKind::StringSelect { values, .. } => values[0].parse::<usize>().unwrap_or(0),
+                        _ => 0
+                    };
+                    current_page = selected_index;
+
+                    select_press.create_response(
+                        &ctx,
+                        serenity::CreateInteractionResponse::UpdateMessage(
+                            serenity::CreateInteractionResponseMessage::default()
+                                .embed(serenity::CreateEmbed::default()
+                                    .title(if selected_index != 0 { t!("commands.wov.player.search.avatars.select_option", index = selected_index, locale = language) }
+                                        else { t!("commands.wov.player.search.avatars.all_avatars", locale = language) })
+                                    .description("")
+                                    .color(CustomColor::CYAN)
+                                    .image(format!("attachment://avatar_{}.png", selected_index))
+                                )
+                                .add_file(attachments.get(current_page).unwrap().clone())
+                        )
+                    ).await.unwrap();
+                }
+            },
+            id if id.ends_with(".sp_graph") => {
+                todo!()
+            },
+            id if id.ends_with(".refresh") => {
+                let player_log_timestamp = player.timestamp.unwrap_or(Utc::now());
+                let time_difference = Utc::now() - player_log_timestamp;
+                if time_difference < TimeDelta::minutes(30) {
+                    // Disable the button
+                    let button_components = get_player_search_buttons(ctx_id, true);
+
+                    press.create_response(
+                        ctx.http(),
+                        serenity::CreateInteractionResponse::UpdateMessage(
+                            serenity::CreateInteractionResponseMessage::default()
+                                .components(vec![button_components])
+                        )
+                    ).await.unwrap();
+
+                    press.create_followup(
+                        ctx.http(),
+                        serenity::CreateInteractionResponseFollowup::new()
+                            .content(
+                                t!(
+                                    "commands.wov.player.search.buttons.refresh.too_frequent",
+                                    time_left = get_relative_timestamp(&(Utc::now()+(TimeDelta::minutes(30)-time_difference)).timestamp()),
+                                    locale = language
+                                ))
+                    ).await.unwrap();
+                } else {
+                    match wolvesville::get_wolvesville_player_by_id(&data.wolvesville_client, &player.id).await {
+                        Ok(Some(mut unpacked)) => {
+                            db::wolvesville::player::insert_or_update_full_player(&data.db_pool, &unpacked).await.map_err(|e| {
+                                error!("An error occurred while inserting or updating the player on refresh: {:?}", e);
+                                e
+                            })?;
+                            let avatar_thumbnail = get_thumbnail_attachment(unpacked.avatars.clone().unwrap().into_iter().next(), unpacked.level).await;
+                            let embed = construct_player_embed(data, &mut unpacked, avatar_thumbnail.filename.as_str()).await;
+                            let button_components = get_player_search_buttons(ctx_id, false);
+                            press.create_response(
+                                ctx.http(),
+                                serenity::CreateInteractionResponse::UpdateMessage(
+                                    serenity::CreateInteractionResponseMessage::default()
+                                        .add_file(avatar_thumbnail)
+                                        .embed(embed)
+                                        .components(vec![button_components])
+                                )
+                            ).await.unwrap();
+                        },
+                        Ok(None) => {
+
+                        },
+                        Err(e) => {
+                            error!("An error occurred while updating outdated information in the `wolvesville player search` command at request for the player by username: {:?}", e);
+
+                        }
+                    };
+                }
+            },
+            _ => {}
+        }
+    }
+
+    Ok(())
+}
+
+async fn get_thumbnail_attachment(avatar: Option<Avatar>, level: Option<i32>) -> serenity::CreateAttachment {
+    match avatar {
+        Some(avatar) => {
+            match wov_image::render_wolvesville_avatar(avatar, level).await {
+                Ok(avatar) => {
+                    let mut buf = Vec::new();
+                    avatar.1.write_to(&mut Cursor::new(&mut buf), image::ImageFormat::Png).expect("Failed to convert image to bytes");
+                    serenity::CreateAttachment::bytes(buf, "avatar.png")
+                },
+                Err(e) => {
+                    error!("An error occurred while rendering the avatar: {:?}", e);
+                    serenity::CreateAttachment::file(&File::open(Path::new("res/images/wov_logo.png")).await.expect("Couldn't find wov_logo.png in res/images"), "avatar.png").await.unwrap()
+                }
+            }
+        },
+        None => serenity::CreateAttachment::file(&File::open(Path::new("res/images/wov_logo.png")).await.expect("Couldn't find wov_logo.png in res/images"), "avatar.png").await.unwrap()
+    }
+}
+
+fn get_player_search_buttons(ctx_id: u64, refresh_button_disabled: bool) -> serenity::CreateActionRow {
+    serenity::CreateActionRow::Buttons(
+        vec![
+            serenity::CreateButton::new(format!("{}.avatars", ctx_id))
+                .label("Avatars")
+                .style(serenity::ButtonStyle::Primary),
+            serenity::CreateButton::new(format!("{}.sp_graph", ctx_id))
+                .label("SP Graph")
+                .style(serenity::ButtonStyle::Primary),
+            serenity::CreateButton::new(format!("{}.refresh", ctx_id))
+                .emoji(serenity::ReactionType::Unicode("🔄".to_string()))
+                .style(serenity::ButtonStyle::Secondary)
+                .disabled(refresh_button_disabled)
+        ]
+    )
+
+}
+
+async fn construct_player_embed(ctx_data: &Data, player: &mut WolvesvillePlayer, thumbnail_filename: &str) -> serenity::CreateEmbed {
+    let language = get_language(ctx_data, &player.id).await;
     // Converting a string with hex code of the color to u32. If it fails, it will be black (0)
     let color = u32::from_str_radix(player.profile_icon_color.trim_start_matches("#"), 16).unwrap_or(0);
-    let avatar_thumbnail = match player.equipped_avatar {
-        Some(avatar) => {
-            let rendered_avatar = wov_image::render_wolvesville_avatar(avatar, player.level).await?;
-            let mut buf = Vec::new();
-            rendered_avatar.1.write_to(&mut Cursor::new(&mut buf), image::ImageFormat::Png).expect("Failed to convert image to bytes");
-            serenity::CreateAttachment::bytes(buf, "avatar.png")
-        },
-        None => serenity::CreateAttachment::file(&File::open(Path::new("res/images/wov_logo.png")).await.expect("Couldn't find wov_logo.png in res/images"), "avatar.png").await?
-    };
+
 
     let mut embed = serenity::CreateEmbed::default()
         .title(format!("{}", player.username))
         .description(if player.previous_username.is_none() {t!("commands.wov.player.search.description.no_previous_username", username=player.username, locale = language)}
-            else {t!("commands.wov.player.search.description.has_previous_username", username=player.username, previous_username=player.previous_username.unwrap(), locale = language)})
+        else {t!("commands.wov.player.search.description.has_previous_username", username=player.username, previous_username= player.previous_username.as_mut().unwrap(), locale = language)})
         .color(serenity::Color::new(color))
-        .thumbnail("attachment://avatar.png")
+        .thumbnail(format!("attachment://{}", thumbnail_filename))
         .timestamp(if let Some(timestamp) = player.timestamp {timestamp} else {Utc::now()});
 
     embed = match player.personal_message {
-        Some(pm) => if !pm.is_empty() { embed } else { embed.field(t!("commands.wov.player.search.personal_message", locale = language), pm, false) },
+        Some(ref mut pm) => if !pm.is_empty() { embed } else { embed.field(t!("commands.wov.player.search.personal_message", locale = language), pm.clone(), false) },
         None => embed
     };
 
@@ -167,7 +379,7 @@ pub async fn search(ctx: Context<'_>, username: String) -> Result<(), Error> {
     embed = embed.field(t!("commands.wov.player.search.level", locale = language), format!("**{}**", level), true);
 
     let status_emoji = match player.status.as_str() {
-        "PLAY" => data.custom_emojis.get(CustomEmoji::LETS_PLAY).unwrap().to_string(),
+        "PLAY" => ctx_data.custom_emojis.get(CustomEmoji::LETS_PLAY).unwrap().to_string(),
         "DEFAULT" => "🟢".to_string(),
         "DND" => "🔴".to_string(),
         _ => "⚫".to_string(),
@@ -176,15 +388,15 @@ pub async fn search(ctx: Context<'_>, username: String) -> Result<(), Error> {
     embed = embed.field(t!("commands.wov.player.search.online_status", locale = language),
                         format!("{} **{}**", status_emoji, t!(format!("commands.wov.player.search.online_status.{}", player.status), locale = language)), true);
 
-    let last_online = DateTime::parse_from_rfc3339(&player.last_online.unwrap()).unwrap();
+    let last_online = DateTime::parse_from_rfc3339(player.last_online.as_mut().unwrap().as_str()).unwrap();
     let last_online = match Utc::now() - last_online.with_timezone(&Utc) < TimeDelta::minutes(7) {
         true => format!("{}", t!("commands.wov.player.search.last_online.just_now", locale = language)),
         false => get_relative_timestamp(&last_online.timestamp())
     };
-    
+
     embed = embed.field(t!("commands.wov.player.search.last_online", locale = language), last_online, true);
 
-    let created_at = if let Some(created_at) = player.creation_time  {
+    let created_at = if let Some(ref mut created_at) = player.creation_time  {
         let created_at = DateTime::parse_from_rfc3339(&created_at).unwrap();
         get_long_date(&created_at.timestamp())
     } else if player.game_stats.total_play_time_in_minutes < 0 {
@@ -216,7 +428,7 @@ pub async fn search(ctx: Context<'_>, username: String) -> Result<(), Error> {
         t!("commands.wov.player.search.roses.value",
             roses_sent = roses_sent,
             roses_received = roses_received,
-            rose_emoji = data.custom_emojis.get(CustomEmoji::SINGLE_ROSE).unwrap().to_string(),
+            rose_emoji = ctx_data.custom_emojis.get(CustomEmoji::SINGLE_ROSE).unwrap().to_string(),
             rose_difference = rose_difference,
             locale = language),
         true
@@ -265,9 +477,9 @@ pub async fn search(ctx: Context<'_>, username: String) -> Result<(), Error> {
     } else {
         let total_amount_of_games =
             player.game_stats.total_win_count +
-            player.game_stats.total_lose_count +
-            player.game_stats.total_tie_count +
-            player.game_stats.exit_game_by_suicide_count;
+                player.game_stats.total_lose_count +
+                player.game_stats.total_tie_count +
+                player.game_stats.exit_game_by_suicide_count;
 
         let total_playtime = match player.game_stats.total_play_time_in_minutes {
             -1 => format!("{}", t!("commands.wov.player.search.private", locale = language)),
@@ -324,8 +536,8 @@ pub async fn search(ctx: Context<'_>, username: String) -> Result<(), Error> {
     }
 
     match player.clan_id {
-        Some(clan_id) => {
-            let clan_info = wolvesville::get_wolvesville_clan_info_by_id(&data.wolvesville_client, &clan_id).await;
+        Some(ref mut clan_id) => {
+            let clan_info = wolvesville::get_wolvesville_clan_info_by_id(&ctx_data.wolvesville_client, &clan_id).await;
             let clan_info = clan_info.unwrap_or_else(|e| {
                 error!("An error occurred while running the `wolvesville player search` command at request for the clan: {:?}", e);
                 None
@@ -363,154 +575,5 @@ pub async fn search(ctx: Context<'_>, username: String) -> Result<(), Error> {
             embed = embed.field(t!("commands.wov.player.search.clan", locale = language), t!("commands.wov.player.search.no_clan", locale = language), false);
         }
     }
-
-    let button_components = get_player_search_buttons(ctx_id, false);
-
-    let loading_emoji = data.custom_emojis.get(CustomEmoji::LOADING).unwrap().to_string();
-
-    ctx.send(poise::CreateReply::default().attachment(avatar_thumbnail).embed(embed).components(vec![button_components])).await.unwrap();
-
-    while let Some(press) = serenity::collector::ComponentInteractionCollector::new(ctx)
-        .filter(move |press| press.data.custom_id.starts_with(ctx_id.to_string().as_str()))
-        .timeout(std::time::Duration::from_secs(600)) // Timeout after 10 minutes
-        .await
-    {
-        match press.data.custom_id.as_str() {
-            id if id.ends_with(".avatars") => {
-                let embed = serenity::CreateEmbed::default()
-                    .title(t!("commands.wov.player.search.avatars.all_avatars", locale = language))
-                    .description(t!("commands.wov.player.search.avatars.rendering",
-                            loading_emoji = loading_emoji,
-                            locale = language
-                        ))
-                    .color(CustomColor::CYAN);
-
-                press.create_response(
-                    ctx.http(),
-                    CreateInteractionResponse::Message(
-                        serenity::CreateInteractionResponseMessage::default()
-                            .embed(embed.clone())
-                    )
-                ).await.unwrap();
-
-                let ordered_avatars: Vec<Avatar> = player.avatars.clone().unwrap().into_iter().collect();
-
-                let unique_avatars: Vec<Avatar> = player.avatars.clone().unwrap()
-                    .into_iter()
-                    .collect::<HashSet<_>>() // Deduplicate the avatars
-                    .into_iter()
-                    .collect();
-
-                let gathered_futures: Vec<_> = unique_avatars
-                    .into_iter()
-                    .map(|avatar| wov_image::render_wolvesville_avatar(avatar, None))
-                    .collect();
-
-                let avatar_images_mapped: HashMap<String, DynamicImage> = futures::future::join_all(gathered_futures).await
-                    .into_iter().filter_map(|image| image.ok()).map(|image| (image.0, image.1)).collect();
-                let all_avatars_image: DynamicImage = wov_image::render_all_wolvesville_avatars(
-                    &ordered_avatars.iter().map(|avatar| avatar.url.clone()).collect(), &avatar_images_mapped).await?;
-
-                // Fix the ordering according to ordered_avatars
-                let mut avatar_images: VecDeque<DynamicImage> = VecDeque::new();
-                for avatar in ordered_avatars.iter() {
-                    avatar_images.push_back(avatar_images_mapped.get(&avatar.url).unwrap().clone());
-                }
-
-                avatar_images.push_front(all_avatars_image);
-
-                let mut current_page = 0;
-
-                let mut attachments: Vec<serenity::CreateAttachment> = Vec::new();
-                for (index, avatar_image) in avatar_images.iter().enumerate() {
-                    let mut buf = Vec::new();
-                    avatar_image.write_to(&mut Cursor::new(&mut buf), image::ImageFormat::Png).expect("Failed to convert image to bytes");
-                    attachments.push(serenity::CreateAttachment::bytes(buf, format!("avatar_{}.png", index)));
-                }
-
-                let select_menu = serenity::CreateActionRow::SelectMenu(
-                    serenity::CreateSelectMenu::new(
-                        format!("{}.avatars.select", press.id.to_string()),
-                        serenity::CreateSelectMenuKind::String {
-                            options: avatar_images.iter().enumerate().map(|(index, _)| {
-                                serenity::CreateSelectMenuOption::new(
-                                    if index != 0 { t!("commands.wov.player.search.avatars.select_option", index = index, locale = language)}
-                                    else { t!("commands.wov.player.search.avatars.all_avatars", locale = language) },
-                                    index.to_string()
-                                )
-                            }).collect()
-                        })
-                        .placeholder(t!("commands.wov.player.search.avatars.select_placeholder", locale = language))
-                );
-                press.edit_followup(
-                    ctx.http().as_ref(),
-                    press.get_response(ctx.http().as_ref()).await.unwrap().id,
-                    serenity::CreateInteractionResponseFollowup::new()
-                        .embed(embed.clone().description("").image(format!("attachment://avatar_{}.png", current_page)))
-                        .add_file(attachments.get(current_page).unwrap().clone())
-                        .components(vec![select_menu])
-                ).await?;
-
-                while let Some(select_press) = serenity::collector::ComponentInteractionCollector::new(ctx)
-                    .filter(move |select_press| select_press.data.custom_id.starts_with(&press.id.to_string()))
-                    .timeout(std::time::Duration::from_secs(600)) // Timeout after 10 minutes
-                    .await
-                {
-                    let selected_index = match &select_press.data.kind {
-                        serenity::ComponentInteractionDataKind::StringSelect { values, .. } => values[0].parse::<usize>().unwrap_or(0),
-                        _ => 0
-                    };
-                    current_page = selected_index;
-
-                    select_press.create_response(
-                        &ctx,
-                        CreateInteractionResponse::UpdateMessage(
-                            serenity::CreateInteractionResponseMessage::default()
-                                .embed(serenity::CreateEmbed::default()
-                                    .title(if selected_index != 0 { t!("commands.wov.player.search.avatars.select_option", index = selected_index, locale = language) }
-                                        else { t!("commands.wov.player.search.avatars.all_avatars", locale = language) })
-                                    .description("")
-                                    .color(CustomColor::CYAN)
-                                    .image(format!("attachment://avatar_{}.png", selected_index))
-                                )
-                                .add_file(attachments.get(current_page).unwrap().clone())
-                        )
-                    ).await.unwrap();
-                }
-            },
-            id if id.ends_with(".sp_graph") => {
-                todo!()
-            },
-            id if id.ends_with(".refresh") => {
-                let player_log_timestamp = player.timestamp.unwrap_or(Utc::now());
-                if (Utc::now() - player_log_timestamp < TimeDelta::minutes(30)) {
-                    // Disable the button
-                    let button_components = get_player_search_buttons(ctx_id, true);
-
-                }
-            },
-            _ => {}
-        }
-    }
-
-    Ok(())
-}
-
-
-fn get_player_search_buttons(ctx_id: u64, refresh_button_disabled: bool) -> serenity::CreateActionRow {
-    serenity::CreateActionRow::Buttons(
-        vec![
-            serenity::CreateButton::new(format!("{}.avatars", ctx_id))
-                .label("Avatars")
-                .style(serenity::ButtonStyle::Primary),
-            serenity::CreateButton::new(format!("{}.sp_graph", ctx_id))
-                .label("SP Graph")
-                .style(serenity::ButtonStyle::Primary),
-            serenity::CreateButton::new(format!("{}.refresh", ctx_id))
-                .emoji(serenity::ReactionType::Unicode("🔄".to_string()))
-                .style(serenity::ButtonStyle::Secondary)
-                .disabled(refresh_button_disabled)
-        ]
-    )
-
+    embed
 }

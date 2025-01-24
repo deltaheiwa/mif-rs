@@ -174,8 +174,8 @@ commands:
             uk: Крива ОМ
           refresh:
             too_frequent:
-              en: "You can refresh the data only once every 30 minutes. You can try again in %{time_left}"
-              uk: "Ви можете оновлювати дані лише один раз кожні 30 хвилин. Ви можете спробувати знову через %{time_left}"
+              en: "You can refresh the data only once every **30 minutes**. You can try again %{time_left}"
+              uk: "Ви можете оновлювати дані лише один раз кожні **30 хвилин**. Ви можете спробувати знову %{time_left}"
         avatars:
           rendering:
             en: "Rendering... %{loading_emoji}"

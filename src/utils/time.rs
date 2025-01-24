@@ -1,5 +1,10 @@
 use chrono::TimeDelta;
 
+/// Return a discord-compatible timestamp string
+///
+/// - <t:timestamp:R> for relative time
+///
+/// '12 minutes ago', '2 hours ago', '1 day ago', etc.
 pub fn get_relative_timestamp(timestamp: &i64) -> String {
     format!("<t:{}:R>", timestamp)
 }
