@@ -1,6 +1,7 @@
 mod handlers;
 mod commands;
 pub mod core;
+pub mod server;
 
 use poise::serenity_prelude as serenity;
 use std::{num::NonZeroUsize, sync::Arc};
