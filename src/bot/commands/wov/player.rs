@@ -2,7 +2,8 @@ use std::collections::{HashMap, HashSet, VecDeque};
 use std::hash::{DefaultHasher, Hash};
 use std::io::Cursor;
 use std::path::Path;
-use poise::serenity_prelude as serenity;
+use std::thread::current;
+use poise::{serenity_prelude as serenity, CreateReply};
 use crate::bot::core::structs::{Context, Error, Data, CustomEmoji, CustomColor};
 use crate::utils::{language::get_language, apicallers::wolvesville, math::calculate_percentage, image::wolvesville as wov_image};
 use logfather::{debug, info, error};
@@ -135,13 +136,13 @@ pub async fn search(ctx: Context<'_>, username: String) -> Result<(), Error> {
 
     let avatar_thumbnail = get_thumbnail_attachment(player.avatars.clone().unwrap().into_iter().next(), player.level).await;
 
-    let embed = construct_player_embed(data,  &mut player, avatar_thumbnail.filename.as_str()).await;
+    let embed = construct_player_embed(data, &mut player, avatar_thumbnail.filename.as_str()).await;
 
-    let button_components = get_player_search_buttons(ctx_id, false);
+    let button_components = get_player_search_buttons(ctx_id, false, false, false, &language);
 
     let loading_emoji = data.custom_emojis.get(CustomEmoji::LOADING).unwrap().to_string();
 
-    ctx.send(poise::CreateReply::default().attachment(avatar_thumbnail).embed(embed).components(vec![button_components])).await.unwrap();
+    let message = ctx.send(CreateReply::default().attachment(avatar_thumbnail).embed(embed).components(vec![button_components])).await.unwrap();
 
     while let Some(press) = serenity::collector::ComponentInteractionCollector::new(ctx)
         .filter(move |press| press.data.custom_id.starts_with(ctx_id.to_string().as_str()))
@@ -251,15 +252,15 @@ pub async fn search(ctx: Context<'_>, username: String) -> Result<(), Error> {
                     ).await.unwrap();
                 }
             },
-            id if id.ends_with(".sp_graph") => {
-                todo!()
+            id if id.ends_with(".sp_plot") => {
+
             },
             id if id.ends_with(".refresh") => {
                 let player_log_timestamp = player.timestamp.unwrap_or(Utc::now());
                 let time_difference = Utc::now() - player_log_timestamp;
                 if time_difference < TimeDelta::minutes(30) {
                     // Disable the button
-                    let button_components = get_player_search_buttons(ctx_id, true);
+                    let button_components = get_player_search_buttons(ctx_id, false, false, true, &language);
 
                     press.create_response(
                         ctx.http(),
@@ -288,7 +289,7 @@ pub async fn search(ctx: Context<'_>, username: String) -> Result<(), Error> {
                             })?;
                             let avatar_thumbnail = get_thumbnail_attachment(unpacked.avatars.clone().unwrap().into_iter().next(), unpacked.level).await;
                             let embed = construct_player_embed(data, &mut unpacked, avatar_thumbnail.filename.as_str()).await;
-                            let button_components = get_player_search_buttons(ctx_id, false);
+                            let button_components = get_player_search_buttons(ctx_id, false, false, false, &language);
                             press.create_response(
                                 ctx.http(),
                                 serenity::CreateInteractionResponse::UpdateMessage(
@@ -300,11 +301,31 @@ pub async fn search(ctx: Context<'_>, username: String) -> Result<(), Error> {
                             ).await.unwrap();
                         },
                         Ok(None) => {
-
+                            let embed_error_not_found = serenity::CreateEmbed::default()
+                                .title(t!("common.error", locale = language))
+                                .description(t!("commands.wov.player.search.not_found", username = player.username, locale = language))
+                                .color(serenity::Color::RED);
+                            press.create_response(
+                                ctx.http(),
+                                serenity::CreateInteractionResponse::Message(
+                                    serenity::CreateInteractionResponseMessage::default()
+                                        .embed(embed_error_not_found)
+                                )
+                            ).await.unwrap();
                         },
                         Err(e) => {
                             error!("An error occurred while updating outdated information in the `wolvesville player search` command at request for the player by username: {:?}", e);
-
+                            let embed_api_error = serenity::CreateEmbed::default()
+                                .title(t!("common.error", locale = language))
+                                .description(t!("common.api_error", locale = language))
+                                .color(serenity::Color::RED);
+                            press.create_response(
+                                ctx.http(),
+                                serenity::CreateInteractionResponse::Message(
+                                    serenity::CreateInteractionResponseMessage::default()
+                                        .embed(embed_api_error)
+                                )
+                            ).await.unwrap();
                         }
                     };
                 }
@@ -313,6 +334,14 @@ pub async fn search(ctx: Context<'_>, username: String) -> Result<(), Error> {
         }
     }
 
+    let current_embed = message.message().await.unwrap().embeds[0].clone();
+
+    message.edit(
+        ctx,
+        CreateReply::default()
+            .components(vec![get_player_search_buttons(ctx_id, true, true, true, &language)])
+            .embed(serenity::CreateEmbed::from(current_embed))
+    ).await?;
     Ok(())
 }
 
@@ -335,19 +364,21 @@ async fn get_thumbnail_attachment(avatar: Option<Avatar>, level: Option<i32>) ->
     }
 }
 
-fn get_player_search_buttons(ctx_id: u64, refresh_button_disabled: bool) -> serenity::CreateActionRow {
+fn get_player_search_buttons(ctx_id: u64, disable_avatars: bool, disable_sp_plot: bool, disable_refresh: bool, language: &String) -> serenity::CreateActionRow {
     serenity::CreateActionRow::Buttons(
         vec![
             serenity::CreateButton::new(format!("{}.avatars", ctx_id))
-                .label("Avatars")
-                .style(serenity::ButtonStyle::Primary),
-            serenity::CreateButton::new(format!("{}.sp_graph", ctx_id))
-                .label("SP Graph")
-                .style(serenity::ButtonStyle::Primary),
+                .label(t!("commands.wov.player.search.buttons.avatars", locale = language))
+                .style(serenity::ButtonStyle::Primary)
+                .disabled(disable_avatars),
+            serenity::CreateButton::new(format!("{}.sp_plot", ctx_id))
+                .label(t!("commands.wov.player.search.buttons.sp_plot", locale = language))
+                .style(serenity::ButtonStyle::Primary)
+                .disabled(disable_sp_plot),
             serenity::CreateButton::new(format!("{}.refresh", ctx_id))
                 .emoji(serenity::ReactionType::Unicode("🔄".to_string()))
                 .style(serenity::ButtonStyle::Secondary)
-                .disabled(refresh_button_disabled)
+                .disabled(disable_refresh)
         ]
     )
 

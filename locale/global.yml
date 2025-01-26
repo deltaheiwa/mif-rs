@@ -169,9 +169,9 @@ commands:
           avatars:
             en: Avatars
             uk: Аватари
-          sp_graph:
-            en: SP graph
-            uk: Крива ОМ
+          sp_plot:
+            en: SP Plot
+            uk: Графік ОМ
           refresh:
             too_frequent:
               en: "You can refresh the data only once every **30 minutes**. You can try again %{time_left}"

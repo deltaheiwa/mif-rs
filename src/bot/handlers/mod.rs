@@ -1,7 +1,5 @@
 use poise::{serenity_prelude as serenity, CreateReply};
-use ::serenity::async_trait;
 use logfather::{warn, info, error};
-use serenity::all::{Context, ResumedEvent};
 use crate::bot::core::structs::{Data, Error};
 
 mod guild_events;
@@ -9,7 +7,7 @@ mod ready;
 
 pub struct Handler;
 
-#[async_trait]
+#[serenity::async_trait]
 impl serenity::EventHandler for Handler {
     async fn guild_create(&self, ctx: serenity::Context, guild: serenity::Guild, is_new: Option<bool>) {
         if is_new.unwrap_or(true) {
@@ -26,7 +24,7 @@ impl serenity::EventHandler for Handler {
         ready::on_ready(ctx, ready).await;
     }
 
-    async fn resume(&self, _ctx: Context, _event: ResumedEvent) {
+    async fn resume(&self, _ctx: serenity::Context, _event: serenity::ResumedEvent) {
         info!("Resumed");
     }
 }
