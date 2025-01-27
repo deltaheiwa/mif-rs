@@ -3,12 +3,17 @@ use sqlx::{query, Row, Sqlite, SqlitePool, Transaction};
 use logfather::{debug, info};
 use crate::utils::apicallers::wolvesville::models::WolvesvillePlayer;
 
+pub struct SPRecord {
+    pub skill: u32,
+    pub timestamp: DateTime<Utc>,
+}
+
 fn pack_player(timestamp: NaiveDateTime, p: &mut WolvesvillePlayer, previous_username: Option<String>) {
     p.previous_username = previous_username;
     p.timestamp = Some(DateTime::from_naive_utc_and_offset(timestamp, Utc));
 }
 
-pub async fn get_player_by_id(pool: &SqlitePool, player_id: &str) -> anyhow::Result<Option<WolvesvillePlayer>> {
+pub async fn _get_player_by_id(pool: &SqlitePool, player_id: &str) -> anyhow::Result<Option<WolvesvillePlayer>> {
     let q = r#"
         SELECT * FROM wolvesville_players
         WHERE player_id = $1;
@@ -153,4 +158,27 @@ pub async fn insert_or_update_full_player(pool: &SqlitePool, player: &Wolvesvill
     transaction.commit().await?;
     info!("Player {} inserted or updated", player.username);
     Ok(())
+}
+
+pub async fn get_all_sp_records_of_player_for_last_n_days(pool: &SqlitePool, player_id: &String, days: i64) -> anyhow::Result<Vec<SPRecord>> {
+    let cutoff = Utc::now().naive_utc() - chrono::Duration::days(days);
+
+    let q = r#"
+        SELECT skill, timestamp FROM wolvesville_player_ranked_skill
+        WHERE player_id = $1 AND timestamp >= datetime($2)
+        ORDER BY timestamp DESC;
+    "#;
+
+    let rows = query(q).bind(player_id).bind(cutoff).fetch_all(pool).await?;
+    let mut records = Vec::new();
+
+    let mut iterator = rows.iter();
+    while let Some(row) = iterator.next() {
+        records.push(SPRecord {
+            skill: row.get("skill"),
+            timestamp: row.get("timestamp"),
+        });
+    }
+
+    Ok(records)
 }

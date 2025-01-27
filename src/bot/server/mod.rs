@@ -1,9 +1,9 @@
 use std::net::SocketAddr;
 use std::sync::Arc;
 use axum::body::Body;
-use axum::{Router, response::Html, routing::get, serve};
+use axum::{Router, routing::get, serve};
 use axum::response::Response;
-use logfather::{debug, info};
+use logfather::info;
 use sysinfo::Pid;
 use tokio::net::TcpListener;
 use crate::bot::core::structs::MetricsManager;

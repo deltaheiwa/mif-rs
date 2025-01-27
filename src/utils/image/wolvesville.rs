@@ -2,6 +2,8 @@ use std::collections::HashMap;
 use ab_glyph::{Font, FontRef, PxScale, ScaleFont};
 use image::{open, DynamicImage, ImageBuffer, Rgba};
 use imageproc::drawing::{draw_text_mut, Canvas};
+use plotters::prelude::*;
+use crate::db::wolvesville::player::SPRecord;
 use crate::utils;
 use crate::utils::apicallers::wolvesville::models::Avatar;
 
@@ -139,4 +141,24 @@ pub async fn render_all_wolvesville_avatars(ordered_urls: &Vec<String>, avatar_i
     }
 
     Ok(main_image)
+}
+
+pub fn draw_sp_plot(buffer: &mut Vec<u8>, data: &Vec<SPRecord>, player_name: &String, language: &String) {
+
+    let mut chart = ChartBuilder::on(&BitMapBackend::with_buffer(buffer, (800, 600)).into_drawing_area())
+        .caption(t!("commands.wov.player.search.buttons.sp_plot.caption", player_name = player_name, locale = language), ("sans-serif", 50).into_font().color(&WHITE))
+        .margin(10)
+        .x_label_area_size(40)
+        .y_label_area_size(40)
+        .build_cartesian_2d(data.iter().map(|record| record.timestamp).min().unwrap()..data.iter().map(|record| record.timestamp).max().unwrap(), 0..data.iter().map(|record| record.skill).max().unwrap())
+        .unwrap();
+
+    chart.configure_mesh().draw().unwrap();
+
+    chart.draw_series(LineSeries::new(
+        data.iter().map(|record| (record.timestamp, record.skill)),
+        &RED
+    )).unwrap();
+
+    chart.configure_series_labels().border_style(&WHITE).draw().unwrap();
 }

@@ -1,8 +1,6 @@
 use std::collections::{HashMap, HashSet, VecDeque};
-use std::hash::{DefaultHasher, Hash};
 use std::io::Cursor;
 use std::path::Path;
-use std::thread::current;
 use poise::{serenity_prelude as serenity, CreateReply};
 use crate::bot::core::structs::{Context, Error, Data, CustomEmoji, CustomColor};
 use crate::utils::{language::get_language, apicallers::wolvesville, math::calculate_percentage, image::wolvesville as wov_image};
@@ -28,7 +26,7 @@ async fn on_missing_username_input(error: poise::FrameworkError<'_, Data, Error>
                     .title(t!("common.error", locale = language))
                     .description(t!("commands.wov.player.search.no_input", locale = language))
                     .color(serenity::Color::RED);
-                ctx.send(poise::CreateReply::default().reply(true).embed(embed)).await.unwrap();
+                ctx.send(CreateReply::default().reply(true).embed(embed)).await.unwrap();
             }
         }
         _ => {
@@ -53,7 +51,7 @@ pub async fn search(ctx: Context<'_>, username: String) -> Result<(), Error> {
             .title(t!("common.error", locale = language))
             .description(t!("commands.wov.player.search.too_short", username = username, locale = language))
             .color(serenity::Color::RED);
-        ctx.send(poise::CreateReply::default().reply(true).embed(embed_too_short)).await.unwrap();
+        ctx.send(CreateReply::default().reply(true).embed(embed_too_short)).await.unwrap();
         return Ok(());
     }
     info!("Searching for player: {}", username);
@@ -84,7 +82,7 @@ pub async fn search(ctx: Context<'_>, username: String) -> Result<(), Error> {
                                     .title(t!("common.error", locale = language))
                                     .description(t!("commands.wov.player.search.not_found", username = username, locale = language))
                                     .color(serenity::Color::RED);
-                                ctx.send(poise::CreateReply::default().reply(true).embed(embed_not_found)).await.unwrap();
+                                ctx.send(CreateReply::default().reply(true).embed(embed_not_found)).await.unwrap();
                                 return Ok(());
                             }
                         }
@@ -97,7 +95,7 @@ pub async fn search(ctx: Context<'_>, username: String) -> Result<(), Error> {
                         .title(t!("common.error", locale = language))
                         .description(t!("common.api_error", locale = language))
                         .color(serenity::Color::RED);
-                    ctx.send(poise::CreateReply::default().reply(true).embed(embed_error)).await.unwrap();
+                    ctx.send(CreateReply::default().reply(true).embed(embed_error)).await.unwrap();
                     return Ok(());
                 }
             }
@@ -253,7 +251,36 @@ pub async fn search(ctx: Context<'_>, username: String) -> Result<(), Error> {
                 }
             },
             id if id.ends_with(".sp_plot") => {
+                let data = db::wolvesville::player::get_all_sp_records_of_player_for_last_n_days(&data.db_pool, &player.id, 30).await.map_err(|e| {
+                    error!("An error occurred while running the `wolvesville player search` command at request for the SP plot: {:?}", e);
+                    e
+                })?;
+                if data.len() < 3 {
+                    let embed_error_not_enough_data = serenity::CreateEmbed::default()
+                        .title(t!("common.error", locale = language))
+                        .description(t!("commands.wov.player.search.sp_plot.not_enough_data", locale = language))
+                        .color(serenity::Color::RED);
+                    press.create_response(
+                        ctx.http(),
+                        serenity::CreateInteractionResponse::Message(
+                            serenity::CreateInteractionResponseMessage::default()
+                                .embed(embed_error_not_enough_data)
+                        )
+                    ).await.unwrap();
+                } else {
+                    let mut buf = vec![0; 800 * 600 * 4];
+                    wov_image::draw_sp_plot(&mut buf, &data, &player.username, &language);
 
+                    let attachment = serenity::CreateAttachment::bytes(buf, "sp_plot.png");
+
+                    press.create_response(
+                        ctx.http(),
+                        serenity::CreateInteractionResponse::Message(
+                            serenity::CreateInteractionResponseMessage::default()
+                                .add_file(attachment)
+                        )
+                    ).await.unwrap();
+                }
             },
             id if id.ends_with(".refresh") => {
                 let player_log_timestamp = player.timestamp.unwrap_or(Utc::now());

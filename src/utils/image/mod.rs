@@ -1,8 +1,6 @@
 pub mod wolvesville;
-
-use std::ops::Index;
 use reqwest::get;
-use image::{load_from_memory, DynamicImage, GenericImageView, ImageBuffer, Pixel, Rgba, RgbaImage};
+use image::{load_from_memory, DynamicImage, ImageBuffer, Pixel, Rgba, RgbaImage};
 use imageproc::drawing::{draw_filled_circle_mut, draw_filled_rect_mut};
 use imageproc::rect::Rect;
 

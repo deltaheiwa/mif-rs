@@ -19,6 +19,7 @@ sysinfo = "0.33.1"
 sqlx = { version = "0.8.2", features = ["sqlite", "runtime-tokio-native-tls", "chrono"]}
 poise = { version = "0.6.1", features = ["cache"] }
 prometheus = "0.13.4"
+plotters = "0.3.7"
 tokio = { version = "1.41.0", features = ["full", "rt-multi-thread"]}
 lru = "0.12.5"
 logfather = "0.2.6"
