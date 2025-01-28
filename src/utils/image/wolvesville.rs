@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 use ab_glyph::{Font, FontRef, PxScale, ScaleFont};
-use image::{open, DynamicImage, ImageBuffer, Rgba};
+use anyhow::anyhow;
+use image::{open, DynamicImage, ImageBuffer, Rgb, Rgba};
 use imageproc::drawing::{draw_text_mut, Canvas};
 use plotters::prelude::*;
 use crate::db::wolvesville::player::SPRecord;
@@ -143,22 +144,53 @@ pub async fn render_all_wolvesville_avatars(ordered_urls: &Vec<String>, avatar_i
     Ok(main_image)
 }
 
-pub fn draw_sp_plot(buffer: &mut Vec<u8>, data: &Vec<SPRecord>, player_name: &String, language: &String) {
+pub fn draw_sp_plot(data: &Vec<SPRecord>, player_name: &String, language: &String) -> anyhow::Result<DynamicImage> {
+    let width = 800;
+    let height = 600;
+    let mut buffer = vec![0; width * height * 3];
+    {
+        let root = BitMapBackend::with_buffer(&mut buffer, (width as u32, height as u32)).into_drawing_area();
+        root.fill(&WHITE)?;
+        let data_iter = data.iter();
+        let max_timestamp = data_iter.clone().map(|record| record.timestamp).max().unwrap();
+        let min_timestamp = data_iter.clone().map(|record| record.timestamp).min().unwrap();
+        let max_skill = data_iter.clone().map(|record| record.skill).max().unwrap();
+        let min_skill = data_iter.clone().map(|record| record.skill).min().unwrap();
+        let diff_timestamp = max_timestamp - min_timestamp;
 
-    let mut chart = ChartBuilder::on(&BitMapBackend::with_buffer(buffer, (800, 600)).into_drawing_area())
-        .caption(t!("commands.wov.player.search.buttons.sp_plot.caption", player_name = player_name, locale = language), ("sans-serif", 50).into_font().color(&WHITE))
-        .margin(10)
-        .x_label_area_size(40)
-        .y_label_area_size(40)
-        .build_cartesian_2d(data.iter().map(|record| record.timestamp).min().unwrap()..data.iter().map(|record| record.timestamp).max().unwrap(), 0..data.iter().map(|record| record.skill).max().unwrap())
-        .unwrap();
+        let mut chart = ChartBuilder::on(&root)
+            .caption(t!("commands.wov.player.search.buttons.sp_plot.caption", player_name = player_name, locale = language), ("sans-serif", 30).into_font().color(&WHITE))
+            .margin(10)
+            .x_label_area_size(40)
+            .y_label_area_size(40)
+            .build_cartesian_2d(
+                min_timestamp - diff_timestamp / 10
+                ..
+                max_timestamp + diff_timestamp / 10,
+                min_skill - 50
+                ..
+                max_skill + 50
+            )?;
 
-    chart.configure_mesh().draw().unwrap();
+        chart
+            .configure_mesh()
+            .disable_mesh()
+            .x_labels(6)
+            .x_label_formatter(&|date| date.format("%Y-%m-%d").to_string())
+            .draw()?;
 
-    chart.draw_series(LineSeries::new(
-        data.iter().map(|record| (record.timestamp, record.skill)),
-        &RED
-    )).unwrap();
+        chart.draw_series(LineSeries::new(
+            data.iter().map(|record| (record.timestamp, record.skill)),
+            &RED
+        ))?;
 
-    chart.configure_series_labels().border_style(&WHITE).draw().unwrap();
+        chart.configure_series_labels().border_style(&WHITE).draw()?;
+
+        root.present()?;
+    }
+
+    let image_buffer: ImageBuffer<Rgb<u8>, Vec<u8>> =
+        ImageBuffer::from_raw(width as u32, height as u32, buffer.clone()).ok_or(anyhow!("Error creating image buffer"))?;
+
+    Ok(DynamicImage::ImageRgb8(image_buffer))
 }

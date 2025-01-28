@@ -6,7 +6,7 @@ use crate::bot::core::structs::{Context, Error, Data, CustomEmoji, CustomColor};
 use crate::utils::{language::get_language, apicallers::wolvesville, math::calculate_percentage, image::wolvesville as wov_image};
 use logfather::{debug, info, error};
 use chrono::{DateTime, TimeDelta, Utc};
-use image::DynamicImage;
+use image::{DynamicImage, ImageFormat};
 use tokio::fs::File;
 use crate::db;
 use crate::utils::apicallers::wolvesville::models::{Avatar, WolvesvillePlayer};
@@ -196,7 +196,7 @@ pub async fn search(ctx: Context<'_>, username: String) -> Result<(), Error> {
                 let mut attachments: Vec<serenity::CreateAttachment> = Vec::new();
                 for (index, avatar_image) in avatar_images.iter().enumerate() {
                     let mut buf = Vec::new();
-                    avatar_image.write_to(&mut Cursor::new(&mut buf), image::ImageFormat::Png).expect("Failed to convert image to bytes");
+                    avatar_image.write_to(&mut Cursor::new(&mut buf), ImageFormat::Png).expect("Failed to convert image to bytes");
                     attachments.push(serenity::CreateAttachment::bytes(buf, format!("avatar_{}.png", index)));
                 }
 
@@ -268,18 +268,36 @@ pub async fn search(ctx: Context<'_>, username: String) -> Result<(), Error> {
                         )
                     ).await.unwrap();
                 } else {
-                    let mut buf = vec![0; 800 * 600 * 4];
-                    wov_image::draw_sp_plot(&mut buf, &data, &player.username, &language);
+                    match wov_image::draw_sp_plot(&data, &player.username, &language) {
+                        Ok(plot) => {
+                            let mut buf = Vec::new();
+                            plot.write_to(&mut Cursor::new(&mut buf), ImageFormat::Png).expect("Failed to convert image to bytes");
+                            let attachment = serenity::CreateAttachment::bytes(buf, "sp_plot.png");
 
-                    let attachment = serenity::CreateAttachment::bytes(buf, "sp_plot.png");
-
-                    press.create_response(
-                        ctx.http(),
-                        serenity::CreateInteractionResponse::Message(
-                            serenity::CreateInteractionResponseMessage::default()
-                                .add_file(attachment)
-                        )
-                    ).await.unwrap();
+                            press.create_response(
+                                ctx.http(),
+                                serenity::CreateInteractionResponse::Message(
+                                    serenity::CreateInteractionResponseMessage::default()
+                                        .add_file(attachment)
+                                )
+                            ).await.unwrap();
+                        },
+                        Err(e) => {
+                            error!("An error occurred while drawing the SP plot: {:?}", e);
+                            let embed_error = serenity::CreateEmbed::default()
+                                .title(t!("common.error", locale = language))
+                                .description(t!("common.api_error", locale = language))
+                                .color(serenity::Color::RED);
+                            press.create_response(
+                                ctx.http(),
+                                serenity::CreateInteractionResponse::Message(
+                                    serenity::CreateInteractionResponseMessage::default()
+                                        .embed(embed_error)
+                                )
+                            ).await.unwrap();
+                            return Ok(());
+                        }
+                    }
                 }
             },
             id if id.ends_with(".refresh") => {
@@ -378,7 +396,7 @@ async fn get_thumbnail_attachment(avatar: Option<Avatar>, level: Option<i32>) ->
             match wov_image::render_wolvesville_avatar(avatar, level).await {
                 Ok(avatar) => {
                     let mut buf = Vec::new();
-                    avatar.1.write_to(&mut Cursor::new(&mut buf), image::ImageFormat::Png).expect("Failed to convert image to bytes");
+                    avatar.1.write_to(&mut Cursor::new(&mut buf), ImageFormat::Png).expect("Failed to convert image to bytes");
                     serenity::CreateAttachment::bytes(buf, "avatar.png")
                 },
                 Err(e) => {

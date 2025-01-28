@@ -3,6 +3,7 @@ use sqlx::{query, Row, Sqlite, SqlitePool, Transaction};
 use logfather::{debug, info};
 use crate::utils::apicallers::wolvesville::models::WolvesvillePlayer;
 
+#[derive(Debug)]
 pub struct SPRecord {
     pub skill: u32,
     pub timestamp: DateTime<Utc>,

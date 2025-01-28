@@ -176,8 +176,8 @@ commands:
               en: "Not enough data to plot the skill points"
               uk: "Недостатньо даних для побудови графіка очок майстерності"
             caption:
-              en: "{player_name}' skill points plot"
-              uk: "Графік очок майстерності {player_name}"
+              en: "%{player_name}' skill points plot"
+              uk: "Графік очок майстерності %{player_name}"
           refresh:
             too_frequent:
               en: "You can refresh the data only once every **30 minutes**. You can try again %{time_left}"
