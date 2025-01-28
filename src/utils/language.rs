@@ -11,6 +11,7 @@ pub async fn get_language(data: &Data, user_id: &String) -> String {
 
     match get_language_code(&data.db_pool, user_id).await {
         Ok(language_code) => {
+            language_cache.put(user_id.clone(), language_code.clone());
             language_code.clone()
         },
         Err(e) => {
@@ -19,4 +20,9 @@ pub async fn get_language(data: &Data, user_id: &String) -> String {
         }
         
     }
+}
+
+pub async fn set_language(data: &Data, user_id: &String, language_code: &str) {
+    let mut language_cache = data.language_cache.lock().await;
+    language_cache.put(user_id.clone(), language_code.to_string());
 }

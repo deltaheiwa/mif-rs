@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use poise::serenity_prelude as serenity;
 use crate::bot::core::structs::{Context, Error, CustomColor};
-use crate::utils::language::get_language;
+use crate::utils::language::{get_language, set_language};
 use crate::db::users::{add_user, hit_user, set_language_code};
 use logfather::error;
 
@@ -110,7 +110,7 @@ pub async fn language(ctx: Context<'_>, new_language: String) -> Result<(), Erro
         let language_name = *language_code_map.get(new_language).unwrap_or(&"Unknown");
 
         match set_language_code(&ctx.data().db_pool, &ctx.author().id.to_string(), new_language).await {
-            Ok(_) => {},
+            Ok(_) => {set_language(ctx.data(), &ctx.author().id.to_string(), new_language).await;},
             Err(e) => {
                 error!("Failed to set language for user with ID {}: {:?}", &ctx.author().id, e);
                 ctx.reply("Database error. Please try again later").await?;

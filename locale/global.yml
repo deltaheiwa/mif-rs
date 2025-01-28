@@ -178,6 +178,9 @@ commands:
             caption:
               en: "%{player_name}' skill points plot"
               uk: "Графік очок майстерності %{player_name}"
+            series_label:
+              en: "Skill points"
+              uk: "Очки майстерності"
           refresh:
             too_frequent:
               en: "You can refresh the data only once every **30 minutes**. You can try again %{time_left}"

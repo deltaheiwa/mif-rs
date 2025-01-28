@@ -121,7 +121,8 @@ pub async fn insert_or_update_full_player(pool: &SqlitePool, player: &Wolvesvill
         VALUES ($1, $2, $3)
         ON CONFLICT(id) DO UPDATE SET
             personal_message = $2,
-            json = $3;
+            json = $3,
+            timestamp = CURRENT_TIMESTAMP;
     "#;
 
     query(sql_wp)
@@ -180,6 +181,8 @@ pub async fn get_all_sp_records_of_player_for_last_n_days(pool: &SqlitePool, pla
             timestamp: row.get("timestamp"),
         });
     }
+
+    debug!("Got {} records for player {}", records.len(), player_id);
 
     Ok(records)
 }

@@ -147,10 +147,11 @@ pub async fn render_all_wolvesville_avatars(ordered_urls: &Vec<String>, avatar_i
 pub fn draw_sp_plot(data: &Vec<SPRecord>, player_name: &String, language: &String) -> anyhow::Result<DynamicImage> {
     let width = 800;
     let height = 600;
+    let dark_gray = RGBAColor(30, 30, 30, 255.0);
     let mut buffer = vec![0; width * height * 3];
     {
         let root = BitMapBackend::with_buffer(&mut buffer, (width as u32, height as u32)).into_drawing_area();
-        root.fill(&WHITE)?;
+        root.fill(&dark_gray)?;
         let data_iter = data.iter();
         let max_timestamp = data_iter.clone().map(|record| record.timestamp).max().unwrap();
         let min_timestamp = data_iter.clone().map(|record| record.timestamp).min().unwrap();
@@ -174,7 +175,10 @@ pub fn draw_sp_plot(data: &Vec<SPRecord>, player_name: &String, language: &Strin
 
         chart
             .configure_mesh()
-            .disable_mesh()
+            .axis_style(&WHITE)
+            .light_line_style(&RGBAColor(40, 40, 40, 128.0)) // Light gray grid lines
+            .bold_line_style(&RGBAColor(50, 50, 50, 128.0))  // Slightly darker gray for major lines
+            .label_style(("sans-serif", 15).into_font().color(&WHITE))
             .x_labels(6)
             .x_label_formatter(&|date| date.format("%Y-%m-%d").to_string())
             .draw()?;
@@ -182,9 +186,15 @@ pub fn draw_sp_plot(data: &Vec<SPRecord>, player_name: &String, language: &Strin
         chart.draw_series(LineSeries::new(
             data.iter().map(|record| (record.timestamp, record.skill)),
             &RED
-        ))?;
+        ))?
+            .label(t!("commands.wov.player.search.buttons.sp_plot.series_label", player_name = player_name, locale = language))
+            .legend(|(x, y)| PathElement::new(vec![(x, y), (x + 20, y)], &RED));
 
-        chart.configure_series_labels().border_style(&WHITE).draw()?;
+        chart
+            .configure_series_labels()
+            .border_style(&WHITE)
+            .label_font(("sans-serif", 10).into_font().color(&WHITE))
+            .draw()?;
 
         root.present()?;
     }
