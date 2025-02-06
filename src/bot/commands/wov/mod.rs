@@ -1,4 +1,5 @@
 pub mod player;
+pub mod clan;
 
 use crate::bot::core::structs::{Context, Error};
 

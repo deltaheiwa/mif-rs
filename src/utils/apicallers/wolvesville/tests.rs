@@ -43,3 +43,23 @@ async fn test_get_wolvesville_player_by_username() {
 
     assert_eq!(player_value.username, username);
 }
+
+#[test]
+async fn test_get_wolvesville_clan_by_name_no_clans() {
+    let client = setup();
+    let clan_name = "non-existent-clan-FFFFFF";
+    let clans = wolvesville::get_wolvesville_clan_info_by_name(&client, clan_name).await;
+    assert!(clans.is_ok());
+    let clans = clans.unwrap();
+    assert!(clans.is_none());
+}
+
+#[test]
+async fn test_get_wolvesville_clan_by_name_with_whitespace() {
+    let client = setup();
+    let clan_name = "Test Clan";
+    let clans = wolvesville::get_wolvesville_clan_info_by_name(&client, clan_name).await;
+    assert!(clans.is_ok());
+    let clans = clans.unwrap();
+    assert!(clans.is_some());
+}

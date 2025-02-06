@@ -10,7 +10,7 @@ use chrono::{DateTime, TimeDelta, Utc};
 use image::{DynamicImage, ImageFormat};
 use tokio::fs::File;
 use crate::db;
-use crate::utils::apicallers::wolvesville::models::{Avatar, WolvesvillePlayer};
+use crate::utils::apicallers::wolvesville::models::{Avatar, Refreshable, WolvesvillePlayer};
 use crate::utils::time::{get_long_date, get_relative_timestamp, pretty_time_delta};
 
 #[allow(unused_imports)]
@@ -37,9 +37,7 @@ async fn on_missing_username_input(error: poise::FrameworkError<'_, Data, Error>
 }
 
 #[poise::command(slash_command, prefix_command)]
-pub async fn player(_ctx: Context<'_>) -> Result<(), Error> {
-    Ok(())
-}
+pub async fn player(_ctx: Context<'_>) -> Result<(), Error> { Ok(()) }
 
 #[poise::command(slash_command, prefix_command,on_error = on_missing_username_input)]
 pub async fn search(ctx: Context<'_>, username: String) -> Result<(), Error> {
@@ -68,7 +66,7 @@ pub async fn search(ctx: Context<'_>, username: String) -> Result<(), Error> {
                     // If the player is found, save to db and return it
                     Some(unpacked) => {
                         debug!("Player found in the API, saving to the database");
-                        db::wolvesville::player::insert_or_update_full_player(&data.db_pool, &unpacked).await.map_err(|e| {
+                        db::wolvesville::player::upsert_full_player(&data.db_pool, &unpacked).await.map_err(|e| {
                         error!("An error occurred while inserting or updating the player: {:?}", e); e})?;
                         unpacked
                     },
@@ -109,7 +107,7 @@ pub async fn search(ctx: Context<'_>, username: String) -> Result<(), Error> {
             match wolvesville::get_wolvesville_player_by_id(&data.wolvesville_client, &player.id).await {
                 Ok(api_player) => match api_player {
                     Some(unpacked) => {
-                        db::wolvesville::player::insert_or_update_full_player(&data.db_pool, &unpacked).await.map_err(|e| {
+                        db::wolvesville::player::upsert_full_player(&data.db_pool, &unpacked).await.map_err(|e| {
                             error!("An error occurred while inserting or updating the player: {:?}", e);
                             e
                         })?;
@@ -229,7 +227,7 @@ pub async fn search(ctx: Context<'_>, username: String) -> Result<(), Error> {
                 let language_inner = language.clone();
                 // This needs to be in a separate thread because the select menu is blocking
                 tokio::spawn(async move {
-                    let mut current_page = 0;
+                    let mut current_page;
 
 
                     while let Some(select_press) = serenity::collector::ComponentInteractionCollector::new(&shard)
@@ -268,7 +266,7 @@ pub async fn search(ctx: Context<'_>, username: String) -> Result<(), Error> {
                 if data.len() < 3 {
                     let embed_error_not_enough_data = serenity::CreateEmbed::default()
                         .title(t!("common.error", locale = language))
-                        .description(t!("commands.wov.player.search.sp_plot.not_enough_data", locale = language))
+                        .description(t!("commands.wov.player.search.buttons.sp_plot.not_enough_data", locale = language))
                         .color(serenity::Color::RED);
                     press.create_response(
                         ctx.http(),
@@ -339,7 +337,7 @@ pub async fn search(ctx: Context<'_>, username: String) -> Result<(), Error> {
                 } else {
                     match wolvesville::get_wolvesville_player_by_id(&data.wolvesville_client, &player.id).await {
                         Ok(Some(mut unpacked)) => {
-                            db::wolvesville::player::insert_or_update_full_player(&data.db_pool, &unpacked).await.map_err(|e| {
+                            db::wolvesville::player::upsert_full_player(&data.db_pool, &unpacked).await.map_err(|e| {
                                 error!("An error occurred while inserting or updating the player on refresh: {:?}", e);
                                 e
                             })?;
@@ -451,7 +449,7 @@ async fn construct_player_embed(ctx_data: &Data, language: &String, player: &mut
         else {t!("commands.wov.player.search.description.has_previous_username", username=player.username, previous_username= player.previous_username.as_mut().unwrap(), locale = language)})
         .color(serenity::Color::new(color))
         .thumbnail(format!("attachment://{}", thumbnail_filename))
-        .timestamp(if let Some(timestamp) = player.timestamp {timestamp} else {Utc::now()});
+        .timestamp(player.timestamp.unwrap_or(Utc::now()));
 
     embed = match player.personal_message {
         Some(ref mut pm) => if !pm.is_empty() { embed } else { embed.field(t!("commands.wov.player.search.personal_message", locale = language), pm.clone(), false) },
@@ -486,12 +484,12 @@ async fn construct_player_embed(ctx_data: &Data, language: &String, player: &mut
         let created_at = DateTime::parse_from_rfc3339(&created_at).unwrap();
         get_long_date(&created_at.timestamp())
     } else if player.game_stats.total_play_time_in_minutes < 0 {
-        format!("{}", t!("commands.wov.player.search.created_on.private", locale = language))
+        format!("{}", t!("commands.wov.common.created_on.private", locale = language))
     } else {
-        format!("{}", t!("commands.wov.player.search.created_on.august_3rd_2018", locale = language))
+        format!("{}", t!("commands.wov.common.created_on.august_3rd_2018", locale = language))
     };
 
-    embed = embed.field(t!("commands.wov.player.search.created_on", locale = language), created_at, true);
+    embed = embed.field(t!("commands.wov.common.created_on", locale = language), created_at, true);
 
     let roses_sent = match player.sent_roses_count {
         Some(-1) | None => "?".to_string(),

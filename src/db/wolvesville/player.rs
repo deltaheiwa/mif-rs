@@ -113,7 +113,7 @@ pub async fn get_player_by_previous_username(pool: &SqlitePool, previous_usernam
     Ok(Some(deserialized_json))
 }
 
-pub async fn insert_or_update_full_player(pool: &SqlitePool, player: &WolvesvillePlayer) -> anyhow::Result<()> {
+pub async fn upsert_full_player(pool: &SqlitePool, player: &WolvesvillePlayer) -> anyhow::Result<()> {
     let mut transaction: Transaction<'_, Sqlite> = pool.begin().await?;
 
     let sql_wp = r#"
@@ -128,7 +128,7 @@ pub async fn insert_or_update_full_player(pool: &SqlitePool, player: &Wolvesvill
     query(sql_wp)
         .bind(&player.id)
         .bind(&player.personal_message)
-        .bind(serde_json::to_value(player).unwrap())
+        .bind(serde_json::to_value(player)?)
         .execute(&mut *transaction)
         .await?;
 

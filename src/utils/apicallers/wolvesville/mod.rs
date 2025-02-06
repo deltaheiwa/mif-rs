@@ -54,3 +54,15 @@ pub async fn get_wolvesville_clan_info_by_id(client: &Arc<Client>, clan_id: &str
     let json = response.json::<WolvesvilleClan>().await?;
     Ok(Some(json))
 }
+
+pub async fn get_wolvesville_clan_info_by_name(client: &Arc<Client>, clan_name: &str) -> ApiResult<Vec<WolvesvilleClan>> {
+    let url = format!("{}/clans/search?name={}", WOLVESVILLE_API_URL, clan_name);
+    let response = client
+        .get(&url)
+        .send()
+        .await?;
+    if response.status().as_u16() == 404 { return Ok(None); }
+    let json = response.json::<Vec<WolvesvilleClan>>().await?;
+    if json.is_empty() { return Ok(None); }
+    Ok(Some(json))
+}

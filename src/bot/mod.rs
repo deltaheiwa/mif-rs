@@ -83,6 +83,12 @@ async fn build_client(token: String) -> Result<serenity::Client, serenity::Error
                             ],
                             ..wov::player::player()
                         },
+                        poise::Command {
+                            subcommands: vec![
+                                wov::clan::search(),
+                            ],
+                            ..wov::clan::clan()
+                        },
                     ],
                     ..wov::wolvesville()
                 },

@@ -1,6 +1,20 @@
 use chrono::{DateTime, Utc};
 use serde::{Serialize, Deserialize};
 
+pub trait Refreshable {
+	fn timestamp(&self) -> Option<DateTime<Utc>>;
+
+	fn is_outdated(&self) -> bool {
+		if let Some(timestamp) = self.timestamp() {
+			let now = Utc::now();
+			let diff = now.signed_duration_since(timestamp);
+			diff.num_days() > 30
+		} else {
+			false
+		}
+	}
+}
+
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, Hash)]
 pub struct Avatar {
 	pub height: i32,
@@ -166,14 +180,19 @@ pub struct WolvesvilleClan {
 	pub tag: Option<String>,
 
 	pub xp: i32,
+
+	pub timestamp: Option<DateTime<Utc>>,
 }
 
-impl WolvesvillePlayer {
-	pub fn is_outdated(&self) -> bool {
-		if let Some(timestamp) = self.timestamp {
-			let now = Utc::now();
-			let diff = now.signed_duration_since(timestamp);
-			diff.num_days() > 30
-		} else { false }
+impl Refreshable for WolvesvillePlayer {
+	fn timestamp(&self) -> Option<DateTime<Utc>> {
+		self.timestamp
 	}
+}
+
+impl Refreshable for WolvesvilleClan {
+	fn timestamp(&self) -> Option<DateTime<Utc>> {
+		self.timestamp
+	}
+
 }

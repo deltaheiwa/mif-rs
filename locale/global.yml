@@ -81,15 +81,6 @@ commands:
         not_found:
           en: "Couldn't find any user with that username. *Maybe they've changed it?*"
           uk: "Не вдалося знайти жодного користувача з таким ім'ям. *Можливо, вони його змінили?*"
-        created_on:
-          en: Created on
-          uk: Створено
-          august_3rd_2018:
-            en: August 3, 2018 or before
-            uk: 3-го серпня, 2018 або раніше
-          private:
-            en: "*Date is hidden*"
-            uk: "*Дату приховано*"
         description:
           no_previous_username:
             en: "Information I could gather about `%{username}` on Wolvesville"
@@ -198,6 +189,65 @@ commands:
           select_option:
             en: "Avatar: %{index}"
             uk: "Аватар: %{index}"
+    clan:
+      search:
+        no_input:
+          en: "No clan name provided.\n\nCorrect syntax: `wolvesville clan search <clan_name>`"
+          uk: "Не вказано назву клану.\n\nПравильний синтаксис: `wolvesville clan search <назва_клану>`"
+        not_found:
+          en: "Couldn't find any clan with that name."
+          uk: "Не вдалося знайти жодного клану з такою назвою."
+        no_description:
+          en: "*No description provided*"
+          uk: "*Опис відсутній*"
+        member_count:
+          en: "Member count"
+          uk: "Кількість учасників"
+        language:
+          en: Language
+          uk: Мова
+        status:
+          en: Clan status
+          uk: Статус клану
+          PUBLIC:
+            en: Public 
+            uk: Публічний
+          PRIVATE:
+            en: Closed
+            uk: Закритий
+          JOIN_BY_REQUEST:
+            en: Invite only
+            uk: Тільки по запрошенню
+        minimum_level:
+          en: Minimum level to join
+          uk: Мінімальний рівень для вступу
+        quests_done:
+          en: Quests completed
+          uk: Завершено завдань
+        multiple_results:
+          title:
+            en: "Clans found"
+            uk: "Знайдені клани"
+          description:
+            en: "use select-menu in order to get more information about a specific clan"
+            uk: "використайте випадаюче меню, щоб отримати більше інформації про певний клан"
+          select_menu_placeholder:
+            en: "Select a clan"
+            uk: "Оберіть клан"
+          no_selection:
+            en: "No clan selected"
+            uk: "Клан не обрано"
+    common:
+      created_on:
+        en: Created on
+        uk: Створено
+        august_3rd_2018:
+          en: August 3, 2018 or before
+          uk: 3-го серпня, 2018 або раніше
+        private:
+          en: "*Date is hidden*"
+          uk: "*Дату приховано*"
+
 common:
   error:
     en: Error
@@ -205,3 +255,6 @@ common:
   api_error:
     en: "An error occurred on the server side, while processing the request.\n\nThis is not related to the bot. Please try again later"
     uk: "На сервері виникла помилка під час обробки запиту.\n\nЦе не пов'язано з ботом. Будь ласка, спробуйте пізніше"
+  timeout_error:
+    en: Timeout exceeded
+    uk: Перевищено час очікування

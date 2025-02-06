@@ -176,8 +176,8 @@ pub fn draw_sp_plot(data: &Vec<SPRecord>, player_name: &String, language: &Strin
         chart
             .configure_mesh()
             .axis_style(&WHITE)
-            .light_line_style(&RGBAColor(40, 40, 40, 128.0)) // Light gray grid lines
-            .bold_line_style(&RGBAColor(50, 50, 50, 128.0))  // Slightly darker gray for major lines
+            .light_line_style(&RGBAColor(40, 40, 40, 128.0)) // slightly lighter grid lines
+            .bold_line_style(&RGBAColor(50, 50, 50, 128.0))  // lighter color than normal grid lines for major lines
             .label_style(("sans-serif", 15).into_font().color(&WHITE))
             .x_labels(6)
             .x_label_formatter(&|date| date.format("%Y-%m-%d").to_string())
