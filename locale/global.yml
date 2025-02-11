@@ -172,10 +172,6 @@ commands:
             series_label:
               en: "Skill points"
               uk: "Очки майстерності"
-          refresh:
-            too_frequent:
-              en: "You can refresh the data only once every **30 minutes**. You can try again %{time_left}"
-              uk: "Ви можете оновлювати дані лише один раз кожні **30 хвилин**. Ви можете спробувати знову %{time_left}"
         avatars:
           rendering:
             en: "Rendering... %{loading_emoji}"
@@ -235,18 +231,47 @@ commands:
             en: "Select a clan"
             uk: "Оберіть клан"
           no_selection:
-            en: "No clan selected"
-            uk: "Клан не обрано"
+            en: "You didn't select any clan"
+            uk: "Ви не обрали жодного клану"
+        fetch_members:
+          en: Show members
+          uk: Показати учасників
+        refresh:
+          en: Refresh
+          uk: Оновити
+        members:
+          en: Members
+          uk: Учасники
+          no_members:
+            en: "*Every member is hidden*"
+            uk: "*Усі учасники приховані*"
+          leader:
+            en: Leader
+            uk: Лідер
+          co_leaders:
+            en: Co-leaders
+            uk: Спів-лідери
+          regular:
+            en: Members
+            uk: Учасники
+          footer:
+            en: "(some members are hidden)"
+            uk: "(деякі учасникі приховані)"
     common:
       created_on:
         en: Created on
         uk: Створено
-        august_3rd_2018:
-          en: August 3, 2018 or before
-          uk: 3-го серпня, 2018 або раніше
-        private:
-          en: "*Date is hidden*"
-          uk: "*Дату приховано*"
+      august_3rd_2018:
+        en: August 3, 2018 or before
+        uk: 3-го серпня, 2018 або раніше
+      private:
+        en: "*Date is hidden*"
+        uk: "*Дату приховано*"
+      buttons:
+        refresh:
+          too_frequent:
+            en: "You can refresh the data only once every **%{interval} minutes**. You can try again %{time_left}"
+            uk: "Ви можете оновлювати дані лише один раз кожні **%{interval} хвилин**. Ви можете спробувати знову %{time_left}"
 
 common:
   error:

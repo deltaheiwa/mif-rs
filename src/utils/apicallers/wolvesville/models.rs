@@ -146,7 +146,7 @@ pub struct WolvesvillePlayer {
 }
 
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct WolvesvilleClan {
 	pub creation_time: String,
@@ -181,7 +181,38 @@ pub struct WolvesvilleClan {
 
 	pub xp: i32,
 
+	pub members: Option<Vec<WolvesvilleClanMember>>,
+
 	pub timestamp: Option<DateTime<Utc>>,
+}
+
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct WolvesvilleClanMember {
+	pub player_id: String,
+
+	pub creation_time: String,
+
+	pub xp: i32,
+
+	pub status: String,
+
+	pub is_co_leader: bool,
+
+	pub username: String,
+
+	pub level: i32,
+
+	pub last_online: String,
+
+	pub profile_icon_id: String,
+
+	pub profile_icon_color: String,
+
+	pub player_status: String,
+
+	pub participate_in_clan_quests: Option<bool>,
 }
 
 impl Refreshable for WolvesvillePlayer {

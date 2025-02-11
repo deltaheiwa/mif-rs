@@ -329,10 +329,12 @@ pub async fn search(ctx: Context<'_>, username: String) -> Result<(), Error> {
                         serenity::CreateInteractionResponseFollowup::new()
                             .content(
                                 t!(
-                                    "commands.wov.player.search.buttons.refresh.too_frequent",
+                                    "commands.wov.common.buttons.refresh.too_frequent",
+                                    interval = 30,
                                     time_left = get_relative_timestamp(&(Utc::now()+(TimeDelta::minutes(30)-time_difference)).timestamp()),
                                     locale = language
                                 ))
+                            .ephemeral(true)
                     ).await.unwrap();
                 } else {
                     match wolvesville::get_wolvesville_player_by_id(&data.wolvesville_client, &player.id).await {
@@ -621,11 +623,27 @@ async fn construct_player_embed(ctx_data: &Data, language: &String, player: &mut
 
     match player.clan_id {
         Some(ref mut clan_id) => {
-            let clan_info = wolvesville::get_wolvesville_clan_info_by_id(&ctx_data.wolvesville_client, &clan_id).await;
-            let clan_info = clan_info.unwrap_or_else(|e| {
-                error!("An error occurred while running the `wolvesville player search` command at request for the clan: {:?}", e);
-                None
-            });
+            // TODO: fetch from db
+            let clan_info = match db::wolvesville::clan::get_wolvesville_clan_info_by_id(&ctx_data.db_pool, &clan_id).await {
+                Ok(Some(clan_info)) => Some(clan_info),
+                Err(_) | Ok(None) => {
+                    match wolvesville::get_wolvesville_clan_info_by_id(&ctx_data.wolvesville_client, &clan_id).await {
+                        Ok(Some(clan_info)) => {
+                            db::wolvesville::clan::upsert_wolvesville_clan(&ctx_data.db_pool, clan_info.clone()).await.map_err(|e| {
+                                error!("An error occurred while inserting or updating the clan: {:?}", e);
+                                e
+                            }).unwrap();
+                            Some(clan_info)
+                        },
+                        Ok(None) => None,
+                        Err(e) => {
+                            error!("An error occurred while running the `wolvesville player search` command at request for the clan: {:?}", e);
+                            None
+                        }
+                    }
+                },
+            };
+            
             match clan_info {
                 Some(clan_info) => {
                     let clan_description: String = match clan_info.description {

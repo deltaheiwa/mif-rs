@@ -1,3 +1,4 @@
+use crate::bot::core::constants::DEFAULT_LANGUAGE;
 use crate::bot::core::structs::Data;
 use crate::db::users::get_language_code;
 use logfather::error;
@@ -16,7 +17,7 @@ pub async fn get_language(data: &Data, user_id: &String) -> String {
         },
         Err(e) => {
             error!("Failed to get language code: {:?}", e);
-            String::from("en")
+            DEFAULT_LANGUAGE.to_string()
         }
         
     }

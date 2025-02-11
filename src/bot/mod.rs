@@ -11,11 +11,9 @@ use lru::LruCache;
 use logfather::error;
 
 use crate::{db::{get_pool, prefixes::get_prefix}, utils::apicallers::wolvesville};
-use core::structs::{Data, Error, PartialContext};
+use core::{structs::{Data, Error, PartialContext}, constants::DEFAULT_PREFIX};
 use commands::*;
 
-
-const DEFAULT_PREFIX: &str = "m.";
 
 /// This function is used to determine the prefix on a command call for each separate server.
 /// It first checks the cache, if the prefix is not found in the cache, it queries the database, or the default '.' prefix if it's not found in the database either.
