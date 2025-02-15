@@ -4,7 +4,12 @@ use crate::bot::core::structs::{Context, CustomColor, Error};
 use crate::utils::{time, language::get_language};
 
 
-#[poise::command(slash_command, prefix_command)]
+/// Pong. Check if the bot is alive
+#[poise::command(
+    slash_command, prefix_command,
+    name_localized("uk", "пінг"),
+    description_localized("uk", "Понг. Перевір чи бот живий")
+)]
 pub async fn ping(ctx: Context<'_>) -> Result<(), Error> {
     let language = get_language(ctx.data(), &ctx.author().id.to_string()).await;
     let runners = &ctx.framework().shard_manager.runners.lock().await;

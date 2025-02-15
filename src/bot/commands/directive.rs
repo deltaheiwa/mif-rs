@@ -73,21 +73,30 @@ async fn show_common(ctx: Context<'_>) -> Result<(), Error> {
 
 
 #[poise::command(
-    prefix_command, slash_command
+    prefix_command, slash_command,
+    name_localized("uk", "налаштування"),
 )]
 pub async fn preferences(ctx: Context<'_>) -> Result<(), Error> {
     show_common(ctx).await
 }
 
+
+/// Check your preferences
 #[poise::command(
-    slash_command, prefix_command
+    slash_command, prefix_command,
+    name_localized("uk", "показати"),
+    description_localized("uk", "Перевірте ваші налаштування")
 )]
 pub async fn show(ctx: Context<'_>) -> Result<(), Error> {
     show_common(ctx).await
 }
 
+/// Set your locale
 #[poise::command(
     slash_command, prefix_command,
+    rename = "locale",
+    name_localized("uk", "мова"),
+    description_localized("uk", "Змініть мову бота")
     )]
 pub async fn language(ctx: Context<'_>, new_language: String) -> Result<(), Error> {
     let new_language = new_language.to_lowercase();

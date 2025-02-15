@@ -177,7 +177,7 @@ pub async fn get_all_sp_records_of_player_for_last_n_days(pool: &SqlitePool, pla
     let mut iterator = rows.iter();
     while let Some(row) = iterator.next() {
         records.push(SPRecord {
-            skill: row.get("skill"),
+            skill: row.try_get("skill").unwrap_or(1500),
             timestamp: row.get("timestamp"),
         });
     }

@@ -23,14 +23,14 @@ commands:
       fields:
         language:
           name:
-            en: Language
+            en: Locale
             uk: Мова
           value:
-            en: "**English** 🇺🇸\n\n*To change language, send* `preferences language <language>` *command*"
-            uk: "**Українська** 🇺🇦\n\n*Щоб змінити мову, надішліть команду* `preferences language <language>`"
+            en: "**English** 🇺🇸\n\n*To change language, invoke* `preferences language <language>` *command*"
+            uk: "**Українська** 🇺🇦\n\n*Щоб змінити мову, викличте команду* `preferences language <language>`"
       change_language:
         success:
-          en: Language changed to `%{language_success}`
+          en: Locale changed to `%{language_success}`
           uk: Мову змінено на `%{language_success}`
         fail:
           en: "Could not recognize the language `%{language_fail}`\n\nIt is possible to select only one of the following languages: `english`, `ukrainian`"
@@ -179,6 +179,9 @@ commands:
           all_avatars:
             en: "All avatars"
             uk: "Усі аватари"
+          no_avatars:
+            en: "Avatars are hidden or this account is too new to have any public avatars"
+            uk: "Аватари приховані або цей аккаунт занадто новий, щоб мати публічних аватарів"
           select_placeholder:
             en: "Select an avatar"
             uk: "Оберіть аватар"

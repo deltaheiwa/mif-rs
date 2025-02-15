@@ -8,7 +8,6 @@ use ::serenity::all::CreateEmbedFooter;
 use tokio::fs::File;
 use crate::bot::core::constants;
 use crate::bot::core::structs::{Context, CustomColor, Data, Error};
-use crate::db::wolvesville::clan;
 use crate::utils::comma_readable_number;
 use crate::utils::time::{get_long_date, get_relative_timestamp};
 use crate::{db, utils};
@@ -35,12 +34,21 @@ async fn on_missing_clan_name(error: poise::FrameworkError<'_, Data, Error>) {
     }
 }
 
-#[poise::command(prefix_command, slash_command)]
+#[poise::command(
+    prefix_command, slash_command,
+    name_localized("uk", "клан"),
+)]
 pub async fn clan(_ctx: Context<'_>) -> Result<(), Error> {
     Ok(())
 }
 
-#[poise::command(prefix_command, slash_command, on_error = on_missing_clan_name)]
+/// Search for a Wolvesville clan by its name
+#[poise::command(
+    prefix_command, slash_command, 
+    on_error = on_missing_clan_name,
+    name_localized("uk", "пошук"),
+    description_localized("uk", "Знайдіть клан Wolvesville за назвою")
+)]
 pub async fn search(ctx: Context<'_>, #[rest] clan_name: String) -> Result<(), Error> {
     let data = ctx.data();
     let language = get_language(data, &ctx.author().id.to_string()).await;

@@ -36,10 +36,19 @@ async fn on_missing_username_input(error: poise::FrameworkError<'_, Data, Error>
     }
 }
 
-#[poise::command(slash_command, prefix_command)]
+#[poise::command(
+    slash_command, prefix_command,
+    name_localized("uk", "гравець")
+)]
 pub async fn player(_ctx: Context<'_>) -> Result<(), Error> { Ok(()) }
 
-#[poise::command(slash_command, prefix_command,on_error = on_missing_username_input)]
+/// Search for a Wolvesville player by their username
+#[poise::command(
+    slash_command, prefix_command,
+    on_error = on_missing_username_input,
+    name_localized("uk", "пошук"),
+    description_localized("uk", "Знайдіть гравця Wolvesville за їхнім ім'ям")
+)]
 pub async fn search(ctx: Context<'_>, username: String) -> Result<(), Error> {
     let data = ctx.data();
     let ctx_id = ctx.id();
@@ -165,6 +174,20 @@ pub async fn search(ctx: Context<'_>, username: String) -> Result<(), Error> {
                 ).await?;
 
                 let ordered_avatars: Vec<Avatar> = player.avatars.clone().unwrap().into_iter().collect();
+
+                if ordered_avatars.is_empty() {
+                    let embed_error_no_avatars = serenity::CreateEmbed::default()
+                        .title(t!("common.error", locale = &language))
+                        .description(t!("commands.wov.player.search.avatars.no_avatars", locale = &language))
+                        .color(serenity::Color::RED);
+                    press.edit_followup(
+                        &ctx.http(),
+                        press.get_response(&ctx.http()).await.unwrap().id,
+                        serenity::CreateInteractionResponseFollowup::new()
+                            .embed(embed_error_no_avatars)
+                    ).await.unwrap();
+                    continue;
+                }
 
                 let unique_avatars: Vec<Avatar> = player.avatars.clone().unwrap()
                     .into_iter()

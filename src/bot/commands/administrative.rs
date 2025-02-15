@@ -14,11 +14,15 @@ async fn on_missing_prefix_error(error: poise::FrameworkError<'_, Data, Error>) 
         }
 }}
 
+
+/// Set the prefix for the bot in the current server
 #[poise::command(
     slash_command, prefix_command,
     guild_only,
     required_permissions = "MANAGE_GUILD",
-    on_error = on_missing_prefix_error
+    on_error = on_missing_prefix_error,
+    name_localized("uk", "префікс"),
+    description_localized("uk", "Встановіть префікс для бота на сервері")
 )]
 pub async fn prefix(ctx: Context<'_>, new_prefix: String) -> Result<(), Error> {
     let language = get_language(ctx.data(), &ctx.author().id.to_string()).await;
