@@ -63,8 +63,9 @@ async fn build_client(token: String) -> Result<serenity::Client, serenity::Error
     let framework = poise::Framework::builder()
         .options(poise::FrameworkOptions {
             commands: vec![
-                informative::ping(),
-                informative::user_info(),
+                informative::help::help(),
+                informative::ping::ping(),
+                informative::userinfo::user_info(),
                 administrative::prefix(),
                 poise::Command {
                     subcommands: vec![

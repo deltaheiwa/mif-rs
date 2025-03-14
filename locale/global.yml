@@ -286,3 +286,19 @@ common:
   timeout_error:
     en: Timeout exceeded
     uk: Перевищено час очікування
+help:
+  informative:
+    en: Informative
+    uk: 
+    ping:
+      en:
+      uk:
+  wov:
+    en:
+    uk:
+  administrative:
+    en:
+    uk:
+  directive:
+    en:
+    uk:

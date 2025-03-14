@@ -71,7 +71,9 @@ async fn show_common(ctx: Context<'_>) -> Result<(), Error> {
     Ok(())
 }
 
-
+/// help-predecessor
+///
+/// test 
 #[poise::command(
     prefix_command, slash_command,
     name_localized("uk", "налаштування"),

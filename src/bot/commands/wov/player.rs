@@ -22,7 +22,7 @@ async fn on_missing_username_input(error: poise::FrameworkError<'_, Data, Error>
         poise::FrameworkError::ArgumentParse { input, ctx, .. } => {
             let language = get_language(ctx.data(), &ctx.author().id.to_string()).await;
 
-            if input == None {
+            if input.is_none() {
                 let embed = serenity::CreateEmbed::default()
                     .title(t!("common.error", locale = language))
                     .description(t!("commands.wov.player.search.no_input", locale = language))
@@ -506,7 +506,7 @@ async fn construct_player_embed(ctx_data: &Data, language: &String, player: &mut
     embed = embed.field(t!("commands.wov.player.search.last_online", locale = language), last_online, true);
 
     let created_at = if let Some(ref mut created_at) = player.creation_time  {
-        let created_at = DateTime::parse_from_rfc3339(&created_at).unwrap();
+        let created_at = DateTime::parse_from_rfc3339(created_at).unwrap();
         get_long_date(&created_at.timestamp())
     } else if player.game_stats.total_play_time_in_minutes < 0 {
         format!("{}", t!("commands.wov.common.created_on.private", locale = language))

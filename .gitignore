@@ -7,3 +7,4 @@ Secrets*.toml
 /.idea
 /logs
 /res/example_data
+.ignore 
