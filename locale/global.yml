@@ -66,6 +66,13 @@ commands:
         status:
           en: Online status
           uk: Статус онлайну
+    help:
+      title:
+        en: Help
+        uk: Довідка
+      description:
+        en: Select a category to get more information about the commands from that category
+        uk: Виберіть категорію, щоб отримати більше інформації про команди з цієї категорії
   wov:
     player:
       search:
