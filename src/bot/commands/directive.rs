@@ -77,6 +77,8 @@ async fn show_common(ctx: Context<'_>) -> Result<(), Error> {
 #[poise::command(
     prefix_command, slash_command,
     name_localized("uk", "налаштування"),
+    subcommands("show", "language"),
+    subcommand_required = false,
 )]
 pub async fn preferences(ctx: Context<'_>) -> Result<(), Error> {
     show_common(ctx).await

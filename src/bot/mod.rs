@@ -67,30 +67,8 @@ async fn build_client(token: String) -> Result<serenity::Client, serenity::Error
                 informative::ping::ping(),
                 informative::userinfo::user_info(),
                 administrative::prefix(),
-                poise::Command {
-                    subcommands: vec![
-                        directive::show(),
-                        directive::language(),
-                    ],
-                    ..directive::preferences()
-                },
-                poise::Command {
-                    subcommands: vec![
-                        poise::Command {
-                            subcommands: vec![
-                                wov::player::search(),
-                            ],
-                            ..wov::player::player()
-                        },
-                        poise::Command {
-                            subcommands: vec![
-                                wov::clan::search(),
-                            ],
-                            ..wov::clan::clan()
-                        },
-                    ],
-                    ..wov::wolvesville()
-                },
+                directive::preferences(),
+                wov::wolvesville(),
             ],
             prefix_options: poise::PrefixFrameworkOptions {
                 prefix: Some(DEFAULT_PREFIX.to_string()),

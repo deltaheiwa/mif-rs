@@ -38,7 +38,9 @@ async fn on_missing_username_input(error: poise::FrameworkError<'_, Data, Error>
 
 #[poise::command(
     slash_command, prefix_command,
-    name_localized("uk", "гравець")
+    name_localized("uk", "гравець"),
+    subcommands("search"),
+    subcommand_required = true,
 )]
 pub async fn player(_ctx: Context<'_>) -> Result<(), Error> { Ok(()) }
 

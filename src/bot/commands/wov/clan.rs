@@ -37,6 +37,8 @@ async fn on_missing_clan_name(error: poise::FrameworkError<'_, Data, Error>) {
 #[poise::command(
     prefix_command, slash_command,
     name_localized("uk", "клан"),
+    subcommands("search"),
+    subcommand_required = true,
 )]
 pub async fn clan(_ctx: Context<'_>) -> Result<(), Error> {
     Ok(())
