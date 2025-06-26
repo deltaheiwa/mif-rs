@@ -19,6 +19,7 @@ i18n!("locale", fallback = "en");
 async fn main() {
     dotenv().ok();
     utils::logger::install_subscriber();
+    utils::logger::set_up_panic_hook();
 
     let pid = std::process::id();
 
