@@ -83,6 +83,9 @@ pub async fn on_error(error: poise::FrameworkError<'_, Data, Error>) {
                 error!("Failed to respond to the missing permissions error: {:?}", err);
             };
         },
+        poise::FrameworkError::UnknownCommand { .. } => {
+            // Do nothing, common occurrence
+        },
         error => {
             error!("An error occurred: {:?}", error.to_string());
         }
