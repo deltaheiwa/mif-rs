@@ -9,9 +9,26 @@ commands:
       fail:
         en: Failed to set prefix. Please try again later
         uk: Не вдалося встановити префікс. Будь ласка, спробуйте пізніше
-      no_input:
-        en: "To set a new prefix, please provide it as an argument: `prefix <new_prefix>`"
-        uk: "Щоб встановити новий префікс, будь ласка, вкажіть його як аргумент: `prefix <новий_префікс>`"
+      no_input_embed:
+        title:
+          en: "Prefix"
+          uk: "Префікс"
+        description:
+          en: "Current prefix is `%{prefix}`"
+          uk: "Поточний префікс - `%{prefix}`"
+        field:
+          en: "To set a new prefix, please provide it as an argument: `prefix <new_prefix>`"
+          uk: "Щоб встановити новий префікс, будь ласка, вкажіть його як аргумент: `prefix <новий_префікс>`"
+      too_long:
+        en: "The prefix is too long. It must be less than 5 characters"
+        uk: "Префікс занадто довгий. Він має бути менше 5 символів"
+      reset:
+        success:
+          en: Prefix reset to default
+          uk: Префікс скинуто до стандартного
+        fail:
+          en: Failed to reset prefix. Please try again later
+          uk: Не вдалося скинути префікс. Будь ласка, спробуйте пізніше
   directive:
     preferences:
       title:
@@ -26,8 +43,14 @@ commands:
             en: Locale
             uk: Мова
           value:
-            en: "**English** 🇺🇸\n\n*To change language, invoke* `preferences language <language>` *command*"
-            uk: "**Українська** 🇺🇦\n\n*Щоб змінити мову, викличте команду* `preferences language <language>`"
+            en: "**English** 🇺🇸"
+            uk: "**Українська** 🇺🇦"
+        prefix:
+          name:
+            en: Prefix
+            uk: Префікс
+          value:
+            en: "`%{prefix}`"
       change_language:
         success:
           en: Locale changed to `%{language_success}`
@@ -73,6 +96,9 @@ commands:
       description:
         en: Select a category to get more information about the commands from that category
         uk: Виберіть категорію, щоб отримати більше інформації про команди з цієї категорії
+      no_description_available:
+        en: "*No description available*"
+        uk: "*Опис відсутній*"
   wov:
     player:
       search:
@@ -271,6 +297,9 @@ commands:
       created_on:
         en: Created on
         uk: Створено
+        private:
+          en: "*Creation date is hidden*"
+          uk: "*Дата створення прихована*"
       august_3rd_2018:
         en: August 3, 2018 or before
         uk: 3-го серпня, 2018 або раніше

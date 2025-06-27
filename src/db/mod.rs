@@ -58,7 +58,7 @@ async fn initialize_schema(pool: &SqlitePool) -> anyhow::Result<()> {
     // NOT FINISHED
     let q = r#"
         CREATE TABLE IF NOT EXISTS prefixes (
-            guild_id TEXT PRIMARY KEY,
+            discord_id TEXT PRIMARY KEY,
             prefix TEXT NOT NULL
         );
 

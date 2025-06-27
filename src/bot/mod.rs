@@ -15,25 +15,36 @@ use core::{structs::{Data, Error, PartialContext}, constants::DEFAULT_PREFIX};
 use commands::*;
 
 
-/// This function is used to determine the prefix on a command call for each separate server.
+/// This function is used to determine the prefix on a command call for each separate server/user.
 /// It first checks the cache, if the prefix is not found in the cache, it queries the database, or the default '.' prefix if it's not found in the database either.
+/// Prioritizes user-specific prefixes over guild prefixes, and returns the default prefix if no specific prefix is set.
 async fn determine_prefix(ctx: PartialContext<'_>) -> Result<Option<String>, Error> {
-    let guild_id = match ctx.guild_id {
-        Some(guild_id) => &guild_id.to_string(),
-        None => {
-            return Ok(Some(String::from(".")));
-        },
-    };
+    let guild_id = ctx.guild_id.map(|id| id.to_string());
+    let user_id = ctx.author.id.to_string();
+    
     let mut prefix_cache = ctx.data.prefix_cache.lock().await;
-    let prefix = prefix_cache
-        .get(guild_id)
-        .unwrap_or(
-            &get_prefix(&ctx.data.db_pool, guild_id)
-            .await
-            .unwrap_or(String::from(".")))
-        .clone();
+    
+    if let Some(user_prefix) = prefix_cache.get(&user_id) {
+        return Ok(Some(user_prefix.clone()));
+    }
 
-    Ok(Some(prefix))
+    if let Ok(Some(user_prefix)) = get_prefix(&ctx.data.db_pool, &user_id).await {
+        prefix_cache.put(user_id, user_prefix.clone());
+        return Ok(Some(user_prefix));
+    }
+    
+    if let Some(guild_id) = guild_id {
+        if let Some(guild_prefix) = prefix_cache.get(&guild_id) {
+            return Ok(Some(guild_prefix.clone()));
+        }
+
+        if let Ok(Some(guild_prefix)) = get_prefix(&ctx.data.db_pool, &guild_id).await {
+            prefix_cache.put(guild_id.clone(), guild_prefix.clone());
+            return Ok(Some(guild_prefix));
+        }
+    }
+
+    Ok(Some(DEFAULT_PREFIX.to_string()))
 }
 
 pub struct Bot {
