@@ -49,8 +49,6 @@ commands:
           name:
             en: Prefix
             uk: Префікс
-          value:
-            en: "`%{prefix}`"
       change_language:
         success:
           en: Locale changed to `%{language_success}`
@@ -99,6 +97,13 @@ commands:
       no_description_available:
         en: "*No description available*"
         uk: "*Опис відсутній*"
+      select_menu_placeholder:
+        en: "Select a category"
+        uk: "Оберіть категорію"
+      category:
+        description:
+          en: "Query the bot with the command `help <command_name>` to get more information about a specific command"
+          uk: "Запитайте бота за допомогою команди `help <command_name>`, щоб отримати більше інформації про конкретну команду"
   wov:
     player:
       search:
@@ -181,11 +186,12 @@ commands:
         clan:
           en: Clan
           uk: Клан
-          value:
-              en: "`%{clan_tag}` | **%{clan_name}** :flag_%{clan_language}: \n%{clan_description}"
           hidden:
               en: "*Clan information is hidden*"
               uk: "*Інформація про клан прихована*"
+          no_description:
+            en: "*No description provided*"
+            uk: "*Опис відсутній*"
         no_clan:
           en: "*Not in a clan or clan information is hidden*"
           uk: "*Не в клані або інформація про клан прихована*"
@@ -300,9 +306,9 @@ commands:
         private:
           en: "*Creation date is hidden*"
           uk: "*Дата створення прихована*"
-      august_3rd_2018:
-        en: August 3, 2018 or before
-        uk: 3-го серпня, 2018 або раніше
+        august_3rd_2018:
+          en: August 3, 2018 or before
+          uk: 3-го серпня, 2018 або раніше
       private:
         en: "*Date is hidden*"
         uk: "*Дату приховано*"
@@ -317,24 +323,30 @@ common:
     en: Error
     uk: Помилка
   api_error:
-    en: "An error occurred on the server side, while processing the request.\n\nThis is not related to the bot. Please try again later"
+    en: "An error occurred on the server side while processing the request.\n\nThis is not related to the bot. Please try again later"
     uk: "На сервері виникла помилка під час обробки запиту.\n\nЦе не пов'язано з ботом. Будь ласка, спробуйте пізніше"
   timeout_error:
     en: Timeout exceeded
     uk: Перевищено час очікування
+  under_construction:
+    title:
+      en: "Under construction"
+      uk: "В розробці"
+    en: "This feature is under construction and will be available soon!"
+    uk: "Ця функція знаходиться в розробці і буде доступна незабаром!"
 help:
-  informative:
-    en: Informative
-    uk: 
-    ping:
-      en:
-      uk:
-  wov:
-    en:
-    uk:
-  administrative:
-    en:
-    uk:
-  directive:
-    en:
-    uk:
+  no_description:
+    en: "*No description available*"
+    uk: "*Опис відсутній*"
+  info:
+    en: Info
+    uk: Інфо
+  wolvesville:
+    en: Wolvesville
+    uk: Wolvesville
+  config:
+    en: Config
+    uk: Налаштування
+  uncategorized:
+    en: Uncategorized
+    uk: Без категорії

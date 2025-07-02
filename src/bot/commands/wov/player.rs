@@ -44,14 +44,17 @@ async fn on_missing_username_input(error: poise::FrameworkError<'_, Data, Error>
 )]
 pub async fn player(_ctx: Context<'_>) -> Result<(), Error> { Ok(()) }
 
-/// Search for a Wolvesville player by their username
+/// Search for a Wolvesville player by their username.
 #[poise::command(
     slash_command, prefix_command,
     on_error = on_missing_username_input,
     name_localized("uk", "пошук"),
-    description_localized("uk", "Знайдіть гравця Wolvesville за їхнім ім'ям")
+    description_localized("uk", "Знайдіть гравця Wolvesville за їхнім ім'ям.")
 )]
-pub async fn search(ctx: Context<'_>, username: String) -> Result<(), Error> {
+pub async fn search(
+    ctx: Context<'_>, 
+    #[name_localized("uk", "імя_користувача")] username: String
+) -> Result<(), Error> {
     let data = ctx.data();
     let ctx_id = ctx.id();
     let language = Arc::new(get_language(data, &ctx.author().id.to_string()).await);
@@ -678,13 +681,13 @@ async fn construct_player_embed(ctx_data: &Data, language: &String, player: &mut
                                 None => description
                             }
                         },
-                        None => format!("{}", t!("commands.wov.player.search.no_description", locale = language))
+                        None => format!("{}", t!("commands.wov.player.search.clan.no_description", locale = language))
                     };
                     embed = embed.field(
                         t!("commands.wov.player.search.clan", locale = language),
-                        t!(
-                            "commands.wov.player.search.clan.value",
-                            clan_tag = clan_info.tag.unwrap_or(" ".to_string()), locale = language,
+                        format!(
+                            "`{clan_tag}` | **{clan_name}** :flag_{clan_language}: \n{clan_description}",
+                            clan_tag = clan_info.tag.unwrap_or(" ".to_string()),
                             clan_name = clan_info.name,
                             clan_language = clan_info.language.to_lowercase(),
                             clan_description = clan_description

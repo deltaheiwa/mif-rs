@@ -35,7 +35,7 @@ async fn show_common(ctx: Context<'_>) -> Result<(), Error> {
         )
         .field(
             t!("commands.directive.preferences.fields.prefix.name", locale = language),
-            t!("commands.directive.preferences.fields.prefix.value", locale = language, prefix = prefix.unwrap_or_else(|| DEFAULT_PREFIX.to_string())),
+            prefix.unwrap_or_else(|| DEFAULT_PREFIX.to_string()),
             false
         );
     
@@ -80,12 +80,12 @@ async fn show_common(ctx: Context<'_>) -> Result<(), Error> {
     Ok(())
 }
 
-/// help-predecessor
-///
-/// test 
+/// Configure the bot to your liking.
 #[poise::command(
     prefix_command, slash_command,
     name_localized("uk", "налаштування"),
+    description_localized("uk", "Налаштуйте бота на свій смак."),
+    category = "config",
     subcommands("show", "language", "prefix"),
     subcommand_required = false,
 )]
@@ -94,7 +94,7 @@ pub async fn preferences(ctx: Context<'_>) -> Result<(), Error> {
 }
 
 
-/// Check your preferences
+/// Check your preferences.
 #[poise::command(
     slash_command, prefix_command,
     name_localized("uk", "показати"),
@@ -104,14 +104,18 @@ pub async fn show(ctx: Context<'_>) -> Result<(), Error> {
     show_common(ctx).await
 }
 
-/// Set your locale
+/// Set your locale. Currently supported languages are English and Ukrainian.
 #[poise::command(
     slash_command, prefix_command,
     rename = "locale",
-    name_localized("uk", "мова"),
-    description_localized("uk", "Змініть мову бота")
+    name_localized("uk", "локалізація"),
+    description_localized("uk", "Змініть мову бота. Підтримуються англійська та українська."),
     )]
-pub async fn language(ctx: Context<'_>, new_language: String) -> Result<(), Error> {
+pub async fn language(
+    ctx: Context<'_>, 
+    #[rename = "language"] #[name_localized("uk", "мова")]
+    new_language: String
+) -> Result<(), Error> {
     let new_language = new_language.to_lowercase();
     let language = get_language(ctx.data(), &ctx.author().id.to_string()).await;
 
@@ -149,14 +153,18 @@ pub async fn language(ctx: Context<'_>, new_language: String) -> Result<(), Erro
 }
 
 
-/// Set your own custom prefix for the bot
+/// Set your own custom prefix for the bot.
 #[poise::command(
     slash_command, prefix_command,
     rename = "prefix",
     name_localized("uk", "префікс"),
-    description_localized("uk", "Поставте власний префікс для бота"),
+    description_localized("uk", "Поставте власний префікс для бота."),
 )]
-pub async fn prefix(ctx: Context<'_>, new_prefix: Option<String>) -> Result<(), Error> {
+pub async fn prefix(
+    ctx: Context<'_>,
+    #[rename = "new_prefix"] #[name_localized("uk", "новий_префікс")]
+    new_prefix: Option<String>
+) -> Result<(), Error> {
     let user_id = ctx.author().id.to_string();
     let language = get_language(ctx.data(), &user_id).await;
     

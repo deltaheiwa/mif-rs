@@ -44,14 +44,17 @@ pub async fn clan(_ctx: Context<'_>) -> Result<(), Error> {
     Ok(())
 }
 
-/// Search for a Wolvesville clan by its name
+/// Search for a Wolvesville clan by its name.
 #[poise::command(
     prefix_command, slash_command, 
     on_error = on_missing_clan_name,
     name_localized("uk", "пошук"),
-    description_localized("uk", "Знайдіть клан Wolvesville за назвою")
+    description_localized("uk", "Знайдіть клан Wolvesville за назвою.")
 )]
-pub async fn search(ctx: Context<'_>, #[rest] clan_name: String) -> Result<(), Error> {
+pub async fn search(
+    ctx: Context<'_>, 
+    #[rest] #[rename = "clan_name"] #[name_localized("uk", "назва_клану")] clan_name: String
+) -> Result<(), Error> {
     let data = ctx.data();
     let language = get_language(data, &ctx.author().id.to_string()).await;
 

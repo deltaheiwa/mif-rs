@@ -9,7 +9,7 @@ use crate::utils::{time, language::get_language};
     rename = "user-info",
     name_localized("uk", "інфо-користувача"),
     description_localized("uk", "Отримай інформацію про користувача"),
-    category = "informative",
+    category = "info",
 )]
 pub async fn user_info(
     ctx: Context<'_>, 

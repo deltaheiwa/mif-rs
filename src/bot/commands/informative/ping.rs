@@ -4,12 +4,12 @@ use crate::bot::core::structs::{Context, Error};
 use crate::utils::language::get_language;
 
 
-/// Pong. Check if the bot is alive
+/// Pong. Check if the bot is alive.
 #[poise::command(
     slash_command, prefix_command,
     name_localized("uk", "пінг"),
-    description_localized("uk", "Понг. Перевір чи бот живий"),
-    category = "informative",
+    description_localized("uk", "Понг. Перевір чи бот живий."),
+    category = "info",
 )]
 pub async fn ping(ctx: Context<'_>) -> Result<(), Error> {
     let language = get_language(ctx.data(), &ctx.author().id.to_string()).await;
