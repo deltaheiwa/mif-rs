@@ -21,11 +21,10 @@ poise = { version = "0.6.1", features = ["cache"] }
 prometheus = "0.14.0"
 plotters = { version = "0.3.7", features =  ["fontconfig-dlopen"] }
 tokio = { version = "1.41.0", features = ["full", "rt-multi-thread"]}
-lru = "0.14.0"
+lru = "0.15.0"
 logfather = "0.2.6"
-rust-i18n = "3.1.2"
 reqwest = { version = "0.12.20", default-features = false, features = ["rustls-tls", "json"] }
-
+rust-i18n = "3.1.5"
 
 [package.metadata.i18n]
 available-locales = ["en", "uk"]
