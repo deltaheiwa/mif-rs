@@ -153,7 +153,11 @@ pub async fn search(
 
     let loading_emoji = data.custom_emojis.get(CustomEmoji::LOADING).unwrap().to_string();
 
-    let message = ctx.send(CreateReply::default().attachment(avatar_thumbnail.clone()).embed(embed).components(vec![button_components])).await.unwrap();
+    let create_reply = CreateReply::default()
+        .attachment(avatar_thumbnail.clone())
+        .embed(embed).components(vec![button_components]);
+
+    let message = ctx.send(create_reply.clone()).await.unwrap();
 
     while let Some(press) = serenity::collector::ComponentInteractionCollector::new(&ctx)
         .filter(move |press| press.data.custom_id.starts_with(ctx_id.to_string().as_str()))
@@ -418,13 +422,10 @@ pub async fn search(
         }
     }
 
-    let current_embed = message.message().await.unwrap().embeds[0].clone();
-
     message.edit(
         ctx,
-        CreateReply::default()
+        create_reply
             .components(vec![get_player_search_buttons(ctx_id, true, true, true, &language)])
-            .embed(serenity::CreateEmbed::from(current_embed))
     ).await?;
     Ok(())
 }
@@ -651,7 +652,6 @@ async fn construct_player_embed(ctx_data: &Data, language: &String, player: &mut
 
     match player.clan_id {
         Some(ref mut clan_id) => {
-            // TODO: fetch from db
             let clan_info = match db::wolvesville::clan::get_wolvesville_clan_info_by_id(&ctx_data.db_pool, &clan_id).await {
                 Ok(Some(clan_info)) => Some(clan_info),
                 Err(_) | Ok(None) => {

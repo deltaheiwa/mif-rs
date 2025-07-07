@@ -14,10 +14,6 @@ pub async fn help(
     ctx: Context<'_>, 
     #[name_localized("uk", "команда")] command: Option<String>
 ) -> Result<(), Error> {
-    // for command in &ctx.framework().options().commands {
-    //    debug!("{}: {}", command.name, command.help_text.clone().unwrap_or("No help text".to_string()));
-    // }
-    
     let language = get_language(ctx.data(), &ctx.author().id.to_string()).await;
     
     if let Some(_) = command {
