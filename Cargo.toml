@@ -7,21 +7,21 @@ edition = "2024"
 ab_glyph = "0.2.29" # To calculate text width
 anyhow = "1.0.95"
 axum = "0.8.1"
+charts-rs = { version = "0.3.24", features = ["image-encoder"] }
 chrono = "0.4.39"
 dotenvy = "0.15.7"
 futures = "0.3.31"
-image = "0.25.5"
+image = "0.25.6"
 imageproc = "0.25.0"
 serenity = { version = "0.12.4", features = ["client", "gateway", "rustls_backend", "model"] }
 serde = { version = "1.0.*", features = ["derive"] }
 serde_json = "1.0.*"
-sysinfo = "0.35.1"
+sysinfo = "0.36.0"
 sqlx = { version = "0.8.2", default-features = false, features = ["sqlite", "runtime-tokio-rustls", "chrono", "migrate", "json"]}
 poise = { version = "0.6.1", features = ["cache"] }
 prometheus = "0.14.0"
-plotters = { version = "0.3.7", features =  ["fontconfig-dlopen"] }
 tokio = { version = "1.41.0", features = ["full", "rt-multi-thread"]}
-lru = "0.15.0"
+lru = "0.16.0"
 logfather = "0.2.6"
 reqwest = { version = "0.12.20", default-features = false, features = ["rustls-tls", "json"] }
 rust-i18n = "3.1.5"

@@ -1,9 +1,11 @@
 use std::collections::HashMap;
+use std::convert::Into;
 use ab_glyph::{Font, FontRef, PxScale, ScaleFont};
 use anyhow::anyhow;
-use image::{open, DynamicImage, ImageBuffer, Rgb, Rgba};
+use charts_rs::{THEME_GRAFANA, svg_to_png, Series, SeriesCategory, Align, LineChart};
+use chrono::{DateTime, Duration, Timelike, Utc};
+use image::{open, DynamicImage, ImageBuffer, Rgba};
 use imageproc::drawing::{draw_text_mut, Canvas};
-use plotters::prelude::*;
 use crate::db::wolvesville::player::SPRecord;
 use crate::utils;
 use crate::utils::apicallers::wolvesville::models::Avatar;
@@ -144,63 +146,149 @@ pub async fn render_all_wolvesville_avatars(ordered_urls: &Vec<String>, avatar_i
     Ok(main_image)
 }
 
-pub fn draw_sp_plot(data: &Vec<SPRecord>, player_name: &String, language: &String) -> anyhow::Result<DynamicImage> {
-    let width = 800;
-    let height = 600;
-    let dark_gray = RGBAColor(30, 30, 30, 255.0);
-    let mut buffer = vec![0; width * height * 3];
-    {
-        let root = BitMapBackend::with_buffer(&mut buffer, (width as u32, height as u32)).into_drawing_area();
-        root.fill(&dark_gray)?;
-        let data_iter = data.iter();
-        let max_timestamp = data_iter.clone().map(|record| record.timestamp).max().unwrap();
-        let min_timestamp = data_iter.clone().map(|record| record.timestamp).min().unwrap();
-        let max_skill = data_iter.clone().map(|record| record.skill).max().unwrap();
-        let min_skill = data_iter.clone().map(|record| record.skill).min().unwrap();
-        let diff_timestamp = max_timestamp - min_timestamp;
-
-        let mut chart = ChartBuilder::on(&root)
-            .caption(t!("commands.wov.player.search.buttons.sp_plot.caption", player_name = player_name, locale = language), ("sans-serif", 30).into_font().color(&WHITE))
-            .margin(10)
-            .x_label_area_size(40)
-            .y_label_area_size(40)
-            .build_cartesian_2d(
-                min_timestamp - diff_timestamp / 10
-                ..
-                max_timestamp + diff_timestamp / 10,
-                min_skill - 50
-                ..
-                max_skill + 50
-            )?;
-
-        chart
-            .configure_mesh()
-            .axis_style(&WHITE)
-            .light_line_style(&RGBAColor(40, 40, 40, 128.0)) // slightly lighter grid lines
-            .bold_line_style(&RGBAColor(50, 50, 50, 128.0))  // lighter color than normal grid lines for major lines
-            .label_style(("sans-serif", 15).into_font().color(&WHITE))
-            .x_labels(6)
-            .x_label_formatter(&|date| date.format("%Y-%m-%d").to_string())
-            .draw()?;
-
-        chart.draw_series(LineSeries::new(
-            data.iter().map(|record| (record.timestamp, record.skill)),
-            &RED
-        ))?
-            .label(t!("commands.wov.player.search.buttons.sp_plot.series_label", player_name = player_name, locale = language))
-            .legend(|(x, y)| PathElement::new(vec![(x, y), (x + 20, y)], &RED));
-
-        chart
-            .configure_series_labels()
-            .border_style(&WHITE)
-            .label_font(("sans-serif", 10).into_font().color(&WHITE))
-            .draw()?;
-
-        root.present()?;
+/// Draws a skill points plot for a player based on their skill points records.
+///
+/// # Arguments
+/// * `data` - A vector of `SPRecord` containing the skill points records ordered by timestamp.
+/// * `player_name` - The name of the player to be displayed in the plot title.
+/// * `language` - The language code for localization of the plot text.
+pub fn draw_sp_plot(data: &Vec<SPRecord>, player_name: &String, language: &String) -> anyhow::Result<Vec<u8>> {
+    if data.is_empty() {
+        return Err(anyhow!("Input data cannot be empty."));
     }
 
-    let image_buffer: ImageBuffer<Rgb<u8>, Vec<u8>> =
-        ImageBuffer::from_raw(width as u32, height as u32, buffer.clone()).ok_or(anyhow!("Error creating image buffer"))?;
+    let (timestamps_strings, skill_points_data) = prepare_line_chart_data(data)
+        .map_err(|e| anyhow!("Failed to prepare line chart data: {}", e))?;
 
-    Ok(DynamicImage::ImageRgb8(image_buffer))
+    let min_skill = data.iter().map(|r| r.skill).min().unwrap_or(0) as f32;
+    let max_skill = data.iter().map(|r| r.skill).max().unwrap_or(0) as f32;
+    
+    let mut series = Series::new(
+        t!(
+            "commands.wov.player.search.buttons.sp_plot.series_label",
+            player_name = player_name,
+            locale = language
+        ).into(),
+        skill_points_data
+    );
+    
+    series.category = Some(SeriesCategory::Line);
+    
+    let mut plot = LineChart::new_with_theme(
+        vec![series],
+        timestamps_strings,
+        THEME_GRAFANA);
+    
+    plot.title_text = t!(
+            "commands.wov.player.search.buttons.sp_plot.caption",
+            player_name = player_name,
+            locale = language
+        ).into();
+
+    plot.title_margin = Some(charts_rs::Box::from(10.0));
+
+    // c t
+    plot.y_axis_configs[0].axis_formatter = Some("{t}".to_string());
+    plot.y_axis_configs[0].axis_min = Some(min_skill - 100.0);
+    plot.y_axis_configs[0].axis_max = Some(max_skill + 100.0);
+
+    plot.legend_align = Align::Right;
+
+    let image_buffer = svg_to_png(&*plot.svg()?)
+        .map_err(|e| anyhow!("Failed to convert SVG to PNG: {}", e))?;
+
+    Ok(image_buffer)
+}
+
+enum Granularity {
+    Daily,
+    Hourly,
+}
+
+fn prepare_line_chart_data(
+    data: &Vec<SPRecord>,
+) -> anyhow::Result<(Vec<String>, Vec<f32>)> {
+    if data.len() < 2 {
+        return Err(anyhow!(
+            "At least two data points are required for interpolation."
+        ));
+    }
+
+    let first_record = data.first().unwrap();
+    let last_record = data.last().unwrap();
+
+    let granularity = if last_record.timestamp - first_record.timestamp
+        >= Duration::days(1)
+    {
+        Granularity::Daily
+    } else {
+        Granularity::Hourly
+    };
+
+    let (step_duration, date_format) = match granularity {
+        Granularity::Daily => (Duration::days(1), "%Y-%m-%d"),
+        Granularity::Hourly => (Duration::hours(1), "%Y-%m-%d %H:00"),
+    };
+
+    let normalize = |ts: DateTime<Utc>| match granularity {
+        Granularity::Daily => ts.date_naive().and_hms_opt(0, 0, 0).unwrap().and_utc(),
+        Granularity::Hourly => ts
+            .with_minute(0)
+            .and_then(|t| t.with_second(0))
+            .and_then(|t| t.with_nanosecond(0))
+            .unwrap(),
+    };
+
+    let mut known_points_map = HashMap::new();
+    for record in data {
+        let key = normalize(record.timestamp).timestamp();
+        known_points_map.insert(key, record.skill as f32);
+    }
+
+    let mut known_points: Vec<(i64, f32)> =
+        known_points_map.into_iter().collect();
+    known_points.sort_unstable_by_key(|k| k.0);
+
+    if known_points.is_empty() {
+        return Ok((vec![], vec![]));
+    }
+    let mut filled_data = Vec::new();
+
+    let mut last_known = known_points[0];
+    filled_data.push(last_known);
+
+    for i in 1..known_points.len() {
+        let next_known = known_points[i];
+        let time_diff = next_known.0 - last_known.0;
+
+
+        if time_diff > step_duration.num_seconds() {
+            let value_diff = next_known.1 - last_known.1;
+            let num_steps_in_gap =
+                (time_diff / step_duration.num_seconds()) as f32;
+            let value_per_step = value_diff / num_steps_in_gap;
+
+            for step_num in 1..(num_steps_in_gap as i64) {
+                let interpolated_timestamp =
+                    last_known.0 + (step_duration.num_seconds() * step_num);
+                let interpolated_value =
+                    last_known.1 + (value_per_step * step_num as f32);
+                filled_data.push((interpolated_timestamp, interpolated_value));
+            }
+        }
+
+        filled_data.push(next_known);
+        last_known = next_known;
+    }
+
+    let mut labels = Vec::with_capacity(filled_data.len());
+    let mut values = Vec::with_capacity(filled_data.len());
+
+    for (timestamp, value) in filled_data {
+        let dt = DateTime::from_timestamp(timestamp, 0).unwrap();
+        labels.push(dt.format(date_format).to_string());
+        values.push(value);
+    }
+
+    Ok((labels, values))
 }

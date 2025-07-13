@@ -21,12 +21,13 @@ pub fn set_up_panic_hook() {
         
         let backtrace = std::backtrace::Backtrace::force_capture();
         
-        error!("--- PANIC DETECTED ---");
-        error!("Timestamp: {}", Local::now().format("%Y-%m-%d %H:%M:%S"));
-        error!("Payload: \"{}\"", payload);
-        error!("Location: {}", location);
-        error!("Backtrace:\n{}", backtrace);
-        error!("------------------------");
+        error!("--- PANIC DETECTED ---\n \
+        Timestamp: {} \
+        \nPayload: \"{}\" \
+        \nLocation: {} \
+        \nBacktrace:\n{} \
+        \n------------------------"
+        , Local::now().format("%Y-%m-%d %H:%M:%S"), payload, location, backtrace);
 
         eprintln!("\nCRITICAL ERROR: A panic occurred. Details logged to logs/main.log.");
         eprintln!("Panic payload: \"{}\" {}", payload, location);

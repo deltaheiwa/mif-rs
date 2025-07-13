@@ -168,7 +168,7 @@ pub async fn get_all_sp_records_of_player_for_last_n_days(pool: &SqlitePool, pla
     let q = r#"
         SELECT skill, timestamp FROM wolvesville_player_ranked_skill
         WHERE player_id = $1 AND timestamp >= datetime($2)
-        ORDER BY timestamp DESC;
+        ORDER BY timestamp ASC;
     "#;
 
     let rows = query(q).bind(player_id).bind(cutoff).fetch_all(pool).await?;

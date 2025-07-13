@@ -310,9 +310,7 @@ pub async fn search(
                 } else {
                     match wov_image::draw_sp_plot(&data, &player.username, &language) {
                         Ok(plot) => {
-                            let mut buf = Vec::new();
-                            plot.write_to(&mut Cursor::new(&mut buf), ImageFormat::Png).expect("Failed to convert image to bytes");
-                            let attachment = serenity::CreateAttachment::bytes(buf, "sp_plot.png");
+                            let attachment = serenity::CreateAttachment::bytes(plot, "sp_plot.png");
 
                             press.create_response(
                                 ctx.http(),
