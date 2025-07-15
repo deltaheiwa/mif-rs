@@ -1,7 +1,7 @@
 mod handlers;
 mod commands;
 pub mod core;
-pub mod server;
+pub mod background;
 
 use poise::serenity_prelude as serenity;
 use std::{num::NonZeroUsize, sync::Arc};
@@ -9,11 +9,11 @@ use tokio::sync::Mutex;
 use ::serenity::all::ActivityData;
 use lru::LruCache;
 use logfather::error;
-
+use sqlx::SqlitePool;
 use crate::{db::{get_pool, prefixes::get_prefix}, utils::apicallers::wolvesville};
 use core::{structs::{Data, Error, PartialContext}, constants::DEFAULT_PREFIX};
 use commands::*;
-
+use crate::utils::scheduler::{JobRegistry, Scheduler};
 
 /// This function is used to determine the prefix on a command call for each separate server/user.
 /// It first checks the cache, if the prefix is not found in the cache, it queries the database, or the default '.' prefix if it's not found in the database either.
@@ -48,13 +48,20 @@ async fn determine_prefix(ctx: PartialContext<'_>) -> Result<Option<String>, Err
 }
 
 pub struct Bot {
-    client: serenity::Client
+    client: serenity::Client,
+    job_registry: Arc<JobRegistry>,
+    scheduler: Scheduler,
 }
 
 impl Bot {
     pub async fn new(token: String) -> Self {
-        let client = build_client(token).await.expect("Failed to build the client");
-        Bot { client }
+        let (client, pool) = build_client(token).await;
+        let job_registry = Arc::new(JobRegistry::new());
+        Bot { 
+            client: client.expect("Failed to create Serenity client"),
+            job_registry: job_registry.clone(),
+            scheduler: Scheduler::new(pool, job_registry),
+        }
     }
 
     pub async fn start(&mut self) {
@@ -64,12 +71,19 @@ impl Bot {
     }
 }
 
-async fn build_client(token: String) -> Result<serenity::Client, serenity::Error> {
+async fn build_client(token: String) -> (Result<serenity::Client, serenity::Error>, Arc<SqlitePool>) {
     let intents = serenity::GatewayIntents::non_privileged()
         | serenity::GatewayIntents::MESSAGE_CONTENT 
         | serenity::GatewayIntents::GUILD_MESSAGES
         | serenity::GatewayIntents::GUILD_MEMBERS
         | serenity::GatewayIntents::GUILD_PRESENCES;
+    
+    let pool = Arc::new(get_pool().await.map_err(|e| {
+        error!("Failed to get database pool: {}", e);
+        serenity::Error::Other("Failed to get database pool")
+    }).expect("Failed to get database pool"));
+    
+    let pool_return = pool.clone();
 
     let framework = poise::Framework::builder()
         .options(poise::FrameworkOptions {
@@ -95,9 +109,10 @@ async fn build_client(token: String) -> Result<serenity::Client, serenity::Error
             Box::pin(async move {
                 poise::builtins::register_globally(ctx, &framework.options().commands).await?;
                 let data = Data {
-                    db_pool: get_pool().await?,
+                    db_pool: pool.clone(),
                     prefix_cache: Arc::new(Mutex::new(LruCache::new(NonZeroUsize::new(100).unwrap()))),
                     language_cache: Arc::new(Mutex::new(LruCache::new(NonZeroUsize::new(100).unwrap()))),
+                    wolvesville_player_refresh_cache: Arc::new(Mutex::new(LruCache::new(NonZeroUsize::new(20).unwrap()))),
                     wolvesville_client: wolvesville::initialize_client(),
                     custom_emojis: ctx.get_application_emojis().await.unwrap().iter().map(|emoji| (emoji.name.clone(), emoji.clone())).collect(),
                 };
@@ -118,5 +133,5 @@ async fn build_client(token: String) -> Result<serenity::Client, serenity::Error
         .event_handler(handlers::Handler)
         .await;
 
-    client
+    (client, pool_return)
 }

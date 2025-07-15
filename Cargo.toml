@@ -4,11 +4,12 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-ab_glyph = "0.2.29" # To calculate text width
+ab_glyph = "0.2.29"
 anyhow = "1.0.95"
 axum = "0.8.1"
 charts-rs = { version = "0.3.24", features = ["image-encoder"] }
 chrono = "0.4.39"
+cron = "0.15.0"
 dotenvy = "0.15.7"
 futures = "0.3.31"
 image = "0.25.6"
@@ -21,10 +22,12 @@ sqlx = { version = "0.8.2", default-features = false, features = ["sqlite", "run
 poise = { version = "0.6.1", features = ["cache"] }
 prometheus = "0.14.0"
 tokio = { version = "1.41.0", features = ["full", "rt-multi-thread"]}
+tokio-util = "0.7.15"
 lru = "0.16.0"
 logfather = "0.2.6"
 reqwest = { version = "0.12.20", default-features = false, features = ["rustls-tls", "json"] }
 rust-i18n = "3.1.5"
+uuid = { version = "1.17.0", features = ["v4", "serde"] }
 
 [package.metadata.i18n]
 available-locales = ["en", "uk"]

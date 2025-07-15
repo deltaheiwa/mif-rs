@@ -2,6 +2,7 @@ pub mod language;
 pub mod logger;
 pub mod time;
 pub mod apicallers;
+pub mod scheduler;
 pub mod image;
 pub mod math;
 mod tests;

@@ -5,6 +5,8 @@ use logfather::{info, error};
 pub mod users;
 pub mod prefixes;
 pub mod wolvesville;
+pub mod lichess;
+pub(crate) mod jobs;
 
 pub async fn get_pool() -> anyhow::Result<SqlitePool> {
     let (db_url, _) = get_db_url()?;
@@ -96,6 +98,44 @@ async fn initialize_schema(pool: &SqlitePool) -> anyhow::Result<()> {
             timestamp DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
             PRIMARY KEY(player_id, timestamp),
             FOREIGN KEY(player_id) REFERENCES wolvesville_players(id) ON DELETE CASCADE
+        );
+        
+        CREATE TABLE IF NOT EXISTS jobs (
+            id TEXT PRIMARY KEY,
+            name TEXT NOT NULL,
+            created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            schedule TEXT NOT NULL,
+            args JSON
+        );
+        
+        CREATE TABLE IF NOT EXISTS lichess_leaderboard_modes (
+            mode TEXT PRIMARY KEY,
+            name TEXT NOT NULL
+        );
+        
+        CREATE TABLE IF NOT EXISTS lichess_leaderboard_entries (
+            mode TEXT PRIMARY KEY,
+            username TEXT NOT NULL,
+            rating INTEGER NOT NULL,
+            progress INTEGER NOT NULL,
+            rank INTEGER NOT NULL,
+            timestamp DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY(mode) REFERENCES lichess_leaderboard_modes(mode) ON DELETE CASCADE
+        );
+        
+        CREATE TABLE IF NOT EXISTS lichess_player (
+            username TEXT PRIMARY KEY,
+            json JSON NOT NULL,
+            timestamp DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+        );
+        
+        CREATE TABLE IF NOT EXISTS lichess_player_performance (
+            username TEXT NOT NULL,
+            perf_name TEXT NOT NULL,
+            perf_json JSON NOT NULL,
+            timestamp DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            PRIMARY KEY(username, perf_name),
+            FOREIGN KEY(username) REFERENCES lichess_player(username) ON DELETE CASCADE
         );
     "#;
 
